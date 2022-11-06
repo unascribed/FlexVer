@@ -4,8 +4,8 @@ A basic Java implementation of FlexVer, originally written for Quilt Loader.
 
 ## Getting it
 
-You can either copy [FlexVerComparator.java](com/unascribed/flexver/FlexVerComparator.java) wholesale
-into your project, or retrieve it from the Sleeping Town Maven, like so in Gradle:
+You can either copy [FlexVerComparator.java](src/main/java/com/unascribed/flexver/FlexVerComparator.java)
+wholesale into your project, or retrieve it from the Sleeping Town Maven, like so in Gradle:
 
 ```gradle
 repositories {

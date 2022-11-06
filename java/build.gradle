@@ -1,5 +1,6 @@
 plugins {
 	id 'java-library'
+	id 'maven-publish'
 }
 
 sourceCompatibility = targetCompatibility = 8
@@ -9,4 +10,29 @@ version = '1.0'
 
 compileJava {
 	options.release = 8
+}
+
+publishing {
+	repositories {
+		if (project.hasProperty("publish-username")) {
+			maven {
+				url "https://repo-api.sleeping.town/"
+				credentials {
+					username project.hasProperty("publish-username") ? project.getProperty("publish-username") : null
+					password project.hasProperty("publish-password") ? project.getProperty("publish-password") : null
+				}
+			}
+		}
+		maven {
+			url file('build/maven').toURI().toString()
+		}
+	}
+	publications {
+		maven(MavenPublication) {
+			groupId = 'com.unascribed'
+			artifactId = 'flexver-java'
+			version = project.version
+			from components.java
+		}
+	}
 }

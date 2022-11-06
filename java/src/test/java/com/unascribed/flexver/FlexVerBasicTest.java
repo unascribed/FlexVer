@@ -9,6 +9,8 @@ import com.unascribed.flexver.FlexVerComparator.VersionComponent;
 
 public class FlexVerBasicTest {
 
+	private static final boolean ANSI = false;
+	
 	private static void test(String a, String b, int expect) {
 		int c = signum(FlexVerComparator.compare(a, b));
 		int c2 = signum(FlexVerComparator.compare(b, a));
@@ -20,7 +22,7 @@ public class FlexVerBasicTest {
 		if (c < 0) res = "<";
 		if (c == 0) res = "=";
 		if (c > 0) res = ">";
-		System.out.println(represent(a)+"\u001B[0m "+res+" "+represent(b));
+		System.out.println(represent(a)+(ANSI?"\u001B[0m ":" ")+res+" "+represent(b));
 	}
 	
 	private static int signum(int i) {
@@ -29,24 +31,34 @@ public class FlexVerBasicTest {
 
 	private static String represent(String str) {
 		List<VersionComponent> d = FlexVerComparator.decompose(str);
-		boolean odd = true;
-		StringBuilder out = new StringBuilder();
+		StringBuilder out = new StringBuilder(ANSI ? "" : "`");
 		for (VersionComponent vc : d) {
-			int color = 90;
-			if (vc instanceof NumericVersionComponent) {
-				color = 96;
-			} else if (vc instanceof LiteralVersionComponent) {
-				color = 95;
-			} else if (vc instanceof SemVerPrereleaseVersionComponent) {
-				color = 91;
+			if (ANSI) {
+				int color = 90;
+				if (vc instanceof NumericVersionComponent) {
+					color = 96;
+				} else if (vc instanceof LiteralVersionComponent) {
+					color = 95;
+				} else if (vc instanceof SemVerPrereleaseVersionComponent) {
+					color = 91;
+				}
+				out.append("\u001B[").append(color).append("m");
 			}
-			out.append("\u001B[").append(color).append("m");
 			out.append(vc);
-			odd = !odd;
+			if (!ANSI) {
+				out.append(" ");
+			}
 		}
 		if (str.contains("+")) {
-			out.append("\u001B[90m");
+			if (ANSI) {
+				out.append("\u001B[90m");
+			}
 			out.append(str.substring(str.indexOf('+')));
+			out.append(" ");
+		}
+		if (!ANSI) {
+			out.setLength(out.length()-1);
+			out.append("`");
 		}
 		return out.toString();
 	}

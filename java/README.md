@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.unascribed:flexver:1.0'
+	implementation 'com.unascribed:flexver-java:1.0'
 }
 ```
 

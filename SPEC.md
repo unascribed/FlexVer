@@ -59,7 +59,9 @@ are those that are final, where `/` is a null component:
 
 `1 . 0 . 1`
 
-Given the typed decomposition, the components can be sorted like so:
+Given the typed decomposition, the components can be sorted as follows. If two components at the
+same index are of differing types and are both not null, then they are compared as if they are both
+Textual components based on their original text.
 
 ### Textual
 For each codepoint in each of the two components (componentA and componentB), their numeric Unicode

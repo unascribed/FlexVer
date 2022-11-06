@@ -68,6 +68,12 @@ public class FlexVerBasicTest {
 		test("1.4.5_01+fabric-1.17", "18w40b", -1);
 		test("13w02a", "c0.3.0_01", -1);
 		test("0.6.0-1.18.x", "0.9.beta-1.18.x", -1);
+		// 2^65. Too large for a 64-bit integer or a double
+		test("36893488147419103232", "36893488147419103233", -1);
+		test("37", "12", 1);
+		test("12", "13", -1);
+		test("12", "21", -1);
+		test("43", "103", -1);
 
 		test("1.0", "1.1", -1);
 	}

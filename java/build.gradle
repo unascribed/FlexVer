@@ -6,7 +6,7 @@ plugins {
 sourceCompatibility = targetCompatibility = 8
 
 archivesBaseName = 'FlexVer'
-version = '1.0'
+version = '1.0.1'
 
 compileJava {
 	options.release = 8

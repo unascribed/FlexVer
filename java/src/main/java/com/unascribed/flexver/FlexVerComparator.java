@@ -9,6 +9,7 @@
 package com.unascribed.flexver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,90 +33,103 @@ public class FlexVerComparator {
 		List<VersionComponent> ad = decompose(a);
 		List<VersionComponent> bd = decompose(b);
 		for (int i = 0; i < Math.max(ad.size(), bd.size()); i++) {
-			VersionComponent ac = get(ad, i);
-			VersionComponent bc = get(bd, i);
-			int c = ac.compareTo(bc);
+			int c = get(ad, i).compareTo(get(bd, i));
 			if (c != 0) return c;
 		}
 		return 0;
 	}
 	
 
-	private static final VersionComponent NULL = new VersionComponent() {
+	private static final VersionComponent NULL = new VersionComponent(new int[0]) {
 		@Override
 		public int compareTo(VersionComponent other) { return other == NULL ? 0 : -other.compareTo(this); }
-		@Override
-		public String toString() { return ""; }
 	};
 	
 	// @VisibleForTesting
-	interface VersionComponent {
-		int compareTo(VersionComponent other);
-	}
-	
-	// @VisibleForTesting
-	static class LiteralVersionComponent implements VersionComponent {
-		private final String str;
-		
-		public LiteralVersionComponent(String str) { this.str = str; }
-		
-		@Override
-		public int compareTo(VersionComponent other) {
-			if (other == NULL) return 1;
-			return toString().compareTo(other.toString());
+	static abstract class VersionComponent {
+		private final int[] codepoints;
+
+		public VersionComponent(int[] codepoints) {
+			this.codepoints = codepoints;
 		}
+		
+		public int[] codepoints() {
+			return codepoints;
+		}
+		
+		public abstract int compareTo(VersionComponent that);
 		
 		@Override
 		public String toString() {
-			return str;
+			return new String(codepoints, 0, codepoints.length);
 		}
+		
 	}
 	
 	// @VisibleForTesting
-	static class NumericVersionComponent implements VersionComponent {
-		private final String strValue;
-		private final long value;
-		
-		public NumericVersionComponent(String value) {
-			this.strValue = value;
-			// just in case someone uses a pointlessly long version string...
-			this.value = Long.parseLong(value);
-		}
-		
-		public long value() {
-			return value;
-		}
-		
+	static class LiteralVersionComponent extends VersionComponent {
+		public LiteralVersionComponent(int[] codepoints) { super(codepoints); }
+
 		@Override
-		public int compareTo(VersionComponent other) {
-			if (other == NULL) return 1;
-			if (other instanceof NumericVersionComponent)
-				return Long.compare(value(), ((NumericVersionComponent)other).value());
-			return toString().compareTo(other.toString());
-		}
-		
-		@Override
-		public String toString() {
-			return strValue;
+		public int compareTo(VersionComponent that) {
+			if (that == NULL) return 1;
+			int[] a = this.codepoints();
+			int[] b = that.codepoints();
+			
+			for (int i = 0; i < Math.min(a.length, b.length); i++) {
+				int c1 = a[i];
+				int c2 = b[i];
+				if (c1 != c2) return c1 - c2;
+			}
+			
+			return a.length - b.length;
 		}
 	}
 	
 	// @VisibleForTesting
-	static class SemVerPrereleaseVersionComponent implements VersionComponent {
-		private final String str;
-		
-		public SemVerPrereleaseVersionComponent(String str) { this.str = str; }
+	static class SemVerPrereleaseVersionComponent extends LiteralVersionComponent {
+		public SemVerPrereleaseVersionComponent(int[] codepoints) { super(codepoints); }
 		
 		@Override
-		public int compareTo(VersionComponent other) {
-			if (other == NULL) return -1; // opposite order
-			return toString().compareTo(other.toString());
+		public int compareTo(VersionComponent that) {
+			if (that == NULL) return -1; // opposite order
+			return super.compareTo(that);
 		}
 		
+	}
+	
+	// @VisibleForTesting
+	static class NumericVersionComponent extends VersionComponent {
+		public NumericVersionComponent(int[] codepoints) { super(codepoints); }
+		
 		@Override
-		public String toString() {
-			return str;
+		public int compareTo(VersionComponent that) {
+			if (that == NULL) return 1;
+			if (that instanceof NumericVersionComponent) {
+				int[] a = this.codepoints();
+				int[] b = that.codepoints();
+				a = removeLeadingZeroes(a);
+				b = removeLeadingZeroes(b);
+				if (a.length != b.length) return Integer.compare(a.length, b.length);
+				for (int i = 0; i < a.length; i++) {
+					int ad = Character.digit(a[i], 10);
+					int bd = Character.digit(b[i], 10);
+					if (ad != bd) return ad-bd;
+				}
+				return 0;
+			}
+			return toString().compareTo(that.toString());
 		}
+		
+		private int[] removeLeadingZeroes(int[] a) {
+			if (a.length == 1) return a;
+			int i = 0;
+			while (i < a.length && Character.digit(a[i], 10) == 0) {
+				i++;
+			}
+			return Arrays.copyOfRange(a, i, a.length);
+		}
+
 	}
 	
 	/*
@@ -126,30 +140,37 @@ public class FlexVerComparator {
 	static List<VersionComponent> decompose(String str) {
 		if (str.isEmpty()) return Collections.emptyList();
 		boolean lastWasNumber = Character.isDigit(str.codePointAt(0));
-		StringBuilder accum = new StringBuilder();
+		int totalCodepoints = str.codePointCount(0, str.length());
+		int[] accum = new int[totalCodepoints];
 		List<VersionComponent> out = new ArrayList<>();
-		// remove appendices
-		int plus = str.indexOf('+');
-		if (plus != -1) str = str.substring(0, plus);
+		int j = 0;
 		for (int i = 0; i < str.length(); i++) {
 			if (i > 0 && Character.isHighSurrogate(str.charAt(i-1)) && Character.isLowSurrogate(str.charAt(i))) continue;
 			int cp = str.codePointAt(i);
-			boolean number = Character.isDigit(cp);
+			if (cp == '+') break; // remove appendices
+			boolean number = isAsciiDigit(cp);
 			if (number != lastWasNumber) {
-				out.add(createComponent(lastWasNumber, accum.toString()));
-				accum.setLength(0);
+				out.add(createComponent(lastWasNumber, accum, j));
+				accum = new int[totalCodepoints];
+				j = 0;
 				lastWasNumber = number;
 			}
-			accum.appendCodePoint(cp);
+			accum[j] = cp;
+			j++;
 		}
-		out.add(createComponent(lastWasNumber, accum.toString()));
+		out.add(createComponent(lastWasNumber, accum, j));
 		return out;
 	}
 
-	private static VersionComponent createComponent(boolean number, String s) {
+	private static boolean isAsciiDigit(int cp) {
+		return cp >= '0' && cp <= '9';
+	}
+
+	private static VersionComponent createComponent(boolean number, int[] s, int j) {
+		s = Arrays.copyOfRange(s, 0, j);
 		if (number) {
 			return new NumericVersionComponent(s);
-		} else if (s.length() > 1 && s.charAt(0) == '-') {
+		} else if (s.length > 1 && s[0] == '-') {
 			return new SemVerPrereleaseVersionComponent(s);
 		} else {
 			return new LiteralVersionComponent(s);

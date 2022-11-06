@@ -1,5 +1,5 @@
 # FlexVer
-FlexVer is a SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild. It's designed to sort versions like people do, rather than attempting to force conformance to a rigid and limited standard.
+FlexVer is a SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild. It's designed to sort versions like people do, rather than attempting to force conformance to a rigid and limited standard. This repo collects meta information and discussion on FlexVer, as well as implementations of it in various languages. Once things are more finished and set-in-stone, I would like to write a more formal specification for it.
 
 It works by splitting a string into "numeric" and "non-numeric" parts, and then sorting those lexically, with a few special cases for SemVer compatibility. This mode of operation is similar to how `sort -V` behaves in GNU coreutils. As such, when used solely for simple comparisons and not group-aware things (such as ~ matches), it is also a stand-in for a SemVer parser (with one exception — read on)
 

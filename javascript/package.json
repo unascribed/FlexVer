@@ -1,6 +1,6 @@
 {
 	"name": "flexver",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild, designed to sort versions like people do. ",
 	"main": "index.js",
 	"scripts": {

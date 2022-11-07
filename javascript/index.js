@@ -115,7 +115,6 @@
 	} else if (typeof window !== "undefined") {
 		window.flexVerCompare = flexVerCompare;
 	} else {
-		// uses eval to avoid tripping syntax errors
-		eval("export default flexVerCompare;");
+		throw new Error("Unknown module system, can't export flexVerCompare. Please PR support!");
 	}
 })();

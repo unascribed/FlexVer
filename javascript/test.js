@@ -1,4 +1,4 @@
-var flexVerCompare = require("./index.js");
+const flexVerCompare = require("./dist/node.js");
 
 function signum(i) {
 	return i < 0 ? -1 : i > 0 ? 1 : 0;

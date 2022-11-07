@@ -1,9 +1,15 @@
-# FlexVer Specification 1.0.1_06
+# FlexVer Specification 1.0.1_07
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed
 to match how a person would compare two version numbers, providing intuitive and "unsurprising"
 results.
+
+> **Note**
+> The following document provides a high-level logical overview of the algorithm. It does *not*
+> describe the most computationally efficient way to do it — or even, in fact, the way it is done
+> in the reference implementations. Please check the reference code for these, once this document
+> has introduced the concepts to you.
 
 ## Unicode Behavior
 FlexVer works entirely in terms of Unicode scalar values, also known as Unicode codepoints. Many
@@ -14,15 +20,15 @@ Supplementary plane Unicode codepoints are generally rare in version numbers, bu
 important to specify this behavior. Built-in language string comparisons often ignore Unicode and
 simply compare the literal code unit values.
 
-However, for less surprising behavior and ease of implementation in languages without a full Unicode
-database, only the ASCII digits (`0123456789`) are considered to be *digits* in FlexVer, and that is
-how they will be referred to in the rest of this document.
+Despite usage of Unicode codepoints, for less surprising behavior and ease of implementation in
+languages without a full Unicode database, only the ASCII digits (`0123456789`) are considered to be
+*digits* in FlexVer (rather than the full Unicode definition), and that is how the term *digit* is
+used in the rest of this document.
 
 ## Decomposition
 The core of a FlexVer comparison is the *decomposition* of the input string into a series of
-*components*. A *component* is a run of codepoints that are either all digits, or all are not
-digits. Decompositions in this document will be represented with spaces separating all components,
-like so:
+*components*. A component is a run of codepoints that are either all digits, or all are not digits.
+Decompositions in this document will be represented with spaces separating all components, like so:
 
 `1 . 0 . 1 _ 01 -pre 1 +exp 2`
 
@@ -32,14 +38,14 @@ contents:
 1. **Textual** - the run is entirely *non-digit* codepoints
 2. **Numeric** - the run is entirely *digit* codepoints
 3. **Pre-release** - the run's first codepoint is ASCII hyphen-minus (`-`) **and is longer than one codepoint**
-4. **Appendix** - the run begins with ASCII plus (`+`)
+4. **Appendix** - the run's first codepoint is ASCII plus (`+`)
 
 Appendices are a special case. If an appendix component is encountered, that component and all of
-those following it are discarded for sorting. This is one of the two SemVer compatibility special
+those following it are disregarded for comparison. This is one of the two SemVer compatibility special
 cases in FlexVer.
 
-Given this information, we can annotate the above decomposition with their types, represented as
-`t`, `n`, `p`, and `a`:
+Given this information, we can annotate the above decomposition with its component types,
+represented as `t`, `n`, `p`, and `a`:
 
 <code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> b<b>1</b> a<b>+exp</b> n<b>2</b></code>
 
@@ -47,8 +53,9 @@ Appendices are discarded, leaving us with:
 
 <code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> b<b>1</b></code>
 
-(This annotated form will not be used again, and is presented here for illustration. The type of a
-component is trivial to determine once the rules are known.)
+> **Note**
+> This annotated form will not be used again, and is presented here for illustration. The type of a
+> component is trivial to determine once the rules are known.
 
 ## Comparison
 When comparing two versions, an additional "null" component is introduced if the versions are of
@@ -60,9 +67,9 @@ are those that are final, where `/` is a null component:
 
 `1 . 0 . 1`
 
-Given the typed decomposition, the components can be sorted as follows. If two components at the
-same index are of differing types and are both not null, then they are compared as if they are both
-Textual components based on their original text.
+Given the typed decomposition, the components can be compared as described below. If two components
+at the same index are of differing types and are both not null, then they are compared as if they
+are both Textual components based on their original text.
 
 ### Textual
 For each codepoint in each of the two components (componentA and componentB), their numeric Unicode
@@ -80,10 +87,11 @@ return componentA.length <=> componentB.length
 
 ### Numeric
 This may either be implemented by parsing the component as an integer and comparing the integers,
-or as a string-based comparison. Either is considered reasonable, with the advantage of the string
-version being there is no limit to the length of a component. Both are described below.
+or as a codepoint-wise comparison following the same rules an integer parser would. Either is
+considered reasonable, with the advantage of the codepoint-wise version being there is no limit to
+the length of a component. Both are described below.
 
-#### Integer
+#### Integer parse
 Parse the component as an integer type, and return the difference between them. In psuedocode:
 
 ```raku
@@ -94,12 +102,13 @@ You should prefer the largest fast integer type available in your language. This
 integer. Parsing the string as an arbitrary-precision integer is wasteful for only doing a
 comparison.
 
-When using this strategy, care must be taken to keep the original string around in the event of a
-fallback to textual comparison, as mentioned above for when two components at the same index differ
-in type. If this is not done, and instead a number is converted back into a string for such a
-comparison, it will be incorrect in the case of components with leading zeroes.
+> **Warning**
+> Care must be taken to keep the original text around in the event of a fallback to textual
+> comparison, as mentioned above for when two components at the same index differ in type. If this
+> is not done, and instead a number is converted back into a string for such a comparison, *it will
+> be incorrect in the case of components with leading zeroes*.
 
-#### String
+#### Codepoint-wise
 Remove zeroes from the beginnings of both components until doing so would leave them as length
 zero. If their lengths differ, that difference is the result. Otherwise, iterate through each
 codepoint, and compare their digit values. If those differ, that difference is the result. If all
@@ -129,15 +138,16 @@ return component.slice(i, component.length);
 ```
 
 ### Pre-release
-Pre-release components are sorted identically to textual components, *except when being compared to
-null*. See the Null section for more.
+Pre-release components are compared identically to textual components, *except when being compared
+to null*. See the Null section for more.
 
 ### Appendix
-Appendix components must be removed before sorting is done.
+Appendix components must be removed before comparison is done.
 
 ### Null
-Null components always sort as less than other components, *except pre-release components*, compared
-to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is *less* than `1.0`.
+Null components always compare as less than other components, *except pre-release components*,
+compared to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is *less* than
+`1.0`. Two null components are of course equal, but a comparison of two nulls should never occur.
 
 ## Sample Decompositions
 
@@ -175,7 +185,7 @@ to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is 
   * `18 w 40 b / / /  /     / / / `
 * 13w02a < c0.3.0_01 (nonsense comparison)
 * 0.6.0-1.18.x < 0.9.beta-1.18.x
-* 36893488147419103232 < 36893488147419103233 (only if String comparison for Numeric components is used, otherwise undefined)
+* 36893488147419103232 < 36893488147419103233 (only if Codepoint-wise comparison for Numeric components is used, otherwise undefined)
 * 1.0 < 1.1
 * 1.0 < 1.0.1
   * `1 . 0 / /`

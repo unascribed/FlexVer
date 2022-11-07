@@ -81,7 +81,7 @@ return componentA.length <=> componentB.length
 ### Numeric
 This may either be implemented by parsing the component as an integer and comparing the integers,
 or as a string-based comparison. Either is considered reasonable, with the advantage of the string
-version being there is no limit to the length of a component.
+version being there is no limit to the length of a component. Both are described below.
 
 #### Integer
 Parse the component as an integer type, and return the difference between them. In psuedocode:
@@ -149,18 +149,11 @@ to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is 
 * 1.0.1 - `1 . 0 . 1`
 * 1.0.0_01 - `1 . 0 . 0 _ 01`
 * 0.17.1-beta.1 - `0 . 17 . 1 -beta. 1`
-* 0.17.1-beta.2 - `0 . 17 . 1 -beta. 2`
 * 1.4.5_01 - `1 . 4 . 5 _ 01`
 * 14w16a - `14 w 16 a`
-* 18w40a - `18 w 40 a`
 * 1.4.5_01+exp-1.17 - `1 . 4 . 5 _ 01 +exp- 1 . 17`
 * 13w02a - `13 w 02 a`
 * 0.6.0-1.18.x - `0 . 6 . 0 - 1 . 18 .x`
-* 36893488147419103232 - `36893488147419103232`
-* 37 - `37`
-* 12 - `12`
-* 12 - `12`
-* 43 - `43`
 * 1.0 - `1 . 0`
 * 1.0.1 - `1 . 0 . 1`
 
@@ -178,8 +171,8 @@ to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is 
 * 14w16a < 18w40b
 * 18w40a < 18w40b
 * 1.4.5_01+exp-1.17 < 18w40b (nonsense comparison)
-  * `1 . 4 . 5 _ 01 +exp- 1 . 17`
-  * `18 w 40 b / /  /     / / / `
+  * `1  . 4  . 5 _ 01 +exp- 1 . 17`
+  * `18 w 40 b / / /  /     / / / `
 * 13w02a < c0.3.0_01 (nonsense comparison)
 * 0.6.0-1.18.x < 0.9.beta-1.18.x
 * 36893488147419103232 < 36893488147419103233 (only if String comparison for Numeric components is used, otherwise undefined)
@@ -187,3 +180,4 @@ to which, *null is greater*. This implements the SemVer rule that `1.0-pre1` is 
 * 1.0 < 1.0.1
   * `1 . 0 / /`
   * `1 . 0 . 1`
+* 10 > 2

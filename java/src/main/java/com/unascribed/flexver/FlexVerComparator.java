@@ -139,7 +139,7 @@ public class FlexVerComparator {
 	// @VisibleForTesting
 	static List<VersionComponent> decompose(String str) {
 		if (str.isEmpty()) return Collections.emptyList();
-		boolean lastWasNumber = Character.isDigit(str.codePointAt(0));
+		boolean lastWasNumber = isAsciiDigit(str.codePointAt(0));
 		int totalCodepoints = str.codePointCount(0, str.length());
 		int[] accum = new int[totalCodepoints];
 		List<VersionComponent> out = new ArrayList<>();

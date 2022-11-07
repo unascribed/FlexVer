@@ -1,0 +1,23 @@
+{
+	"name": "flexver",
+	"version": "1.0.0",
+	"description": "A SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild, designed to sort versions like people do. ",
+	"main": "index.js",
+	"scripts": {
+		"test": "node test.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/unascribed/FlexVer.git"
+	},
+	"keywords": [
+		"semver",
+		"version",
+		"compare",
+		"flexver"
+	],
+	"author": "Una Thompson (unascribed)",
+	"license": "CC0-1.0",
+	"bugs": { "url": "https://github.com/unascribed/FlexVer/issues" },
+	"homepage": "https://github.com/unascribed/FlexVer#readme"
+}

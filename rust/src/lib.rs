@@ -17,7 +17,7 @@ use std::str::pattern::Pattern;
 
 #[derive(Debug)]
 enum SortingType {
-    Numerical(i64),
+    Numerical(i64, String),
     Lexical(String),
     SemverPrerelease(String),
 }
@@ -25,8 +25,7 @@ enum SortingType {
 impl SortingType {
     fn to_string(self) -> String {
         match self {
-            Self::Numerical(a) => a.to_string(),
-            Self::Lexical(a) | Self::SemverPrerelease(a) => a,
+            Self::Numerical(_, a) | Self::Lexical(a) | Self::SemverPrerelease(a) => a,
         }
     }
 }
@@ -63,7 +62,10 @@ fn decompose(str_in: &str) -> VecDeque<SortingType> {
     while !s.is_empty() {
         if last_numeric {
             if let Some((left, right)) = split_once_rest(&s, |c: char| !c.is_ascii_digit()) {
-                out.push_back(SortingType::Numerical(left.parse::<i64>().unwrap()));
+                out.push_back(SortingType::Numerical(
+                    left.parse::<i64>().unwrap(),
+                    left.to_owned(),
+                ));
                 s = right.to_owned();
                 last_numeric = false;
             }
@@ -127,7 +129,7 @@ pub fn compare(left: &str, right: &str) -> Ordering {
                 }
             }
             (Some(l), Some(r)) => match (l, r) {
-                (Numerical(l), Numerical(r)) => l.cmp(&r),
+                (Numerical(l, _), Numerical(r, _)) => l.cmp(&r),
                 (l, r) => l.to_string().cmp(&r.to_string()),
             },
             (None, None) => unreachable!(),

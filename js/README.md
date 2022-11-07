@@ -6,7 +6,8 @@ work anywhere, as long as String.codePointAt is defined.
 ## Getting it
 
 You can either copy and rename [index.js](index.js) wholesale into your project, or retrieve it from
-NPM, where the package name is `flexver`.
+NPM, where the package is [flexver](https://www.npmjs.com/package/flexver). In `dist`, there are
+three files; `browser.js`, `module.js`, and `node.js`, for different target platforms.
 
 ## Usage
 

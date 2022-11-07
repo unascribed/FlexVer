@@ -83,11 +83,6 @@ This may either be implemented by parsing the component as an integer and compar
 or as a string-based comparison. Either is considered reasonable, with the advantage of the string
 version being there is no limit to the length of a component.
 
-When using this strategy, care must be taken to keep the original string around in the event of a
-fallback to textual comparison, as mentioned above for when two components at the same index differ
-in type. If this is not done, and instead a number is converted back into a string for such a
-comparison, it will be incorrect in the case of components with leading zeroes.
-
 #### Integer
 Parse the component as an integer type, and return the difference between them. In psuedocode:
 
@@ -98,6 +93,11 @@ int(componentA) <=> int(componentB)
 You should prefer the largest fast integer type available in your language. This is usually a 64-bit
 integer. Parsing the string as an arbitrary-precision integer is wasteful for only doing a
 comparison.
+
+When using this strategy, care must be taken to keep the original string around in the event of a
+fallback to textual comparison, as mentioned above for when two components at the same index differ
+in type. If this is not done, and instead a number is converted back into a string for such a
+comparison, it will be incorrect in the case of components with leading zeroes.
 
 #### String
 Remove zeroes from the beginnings of both components until doing so would leave them as length

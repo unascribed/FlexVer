@@ -19,9 +19,10 @@ database, only the ASCII digits (`0123456789`) are considered to be *digits* in 
 how they will be referred to in the rest of this document.
 
 ## Decomposition
-The core of a FlexVer comparison is the *decomposition* of the input string. A "component" is a run
-of codepoints that are either all digits, or all are not digits. Decompositions in this document
-will be represented with spaces separating all components, like so:
+The core of a FlexVer comparison is the *decomposition* of the input string into a series of
+*components*. A *component* is a run of codepoints that are either all digits, or all are not
+digits. Decompositions in this document will be represented with spaces separating all components,
+like so:
 
 `1 . 0 . 1 _ 01 -pre 1 +exp 2`
 

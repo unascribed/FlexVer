@@ -1,4 +1,4 @@
-# FlexVer Specification 1.0.1 (DRAFT)
+# FlexVer Specification 1.0.1_06
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed

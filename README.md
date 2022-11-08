@@ -1,3 +1,5 @@
+<img src="logo.svg" width="180px" align="right"/>
+
 # FlexVer
 FlexVer is a SemVer-compatible intuitive comparator for free-form versioning strings as seen in the
 wild. It's designed to sort versions like people do, rather than attempting to force conformance to

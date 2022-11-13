@@ -120,10 +120,14 @@ func decompose(str string) ([]component, error) {
 
 		if str[i] == '+' {
 			break // Ignore appendices
-		} else if str[i] == '-' && len(str) > i+1 {
-			// Mark as pre-release, eat first codepoint
-			t = componentTypePreRelease
+		} else if str[i] == '-' {
+			// Add dash to component
+			cur = append(cur, '-')
 			i++
+			// If the next rune is non-digit, mark as pre-release (requires >= 1 non-digit after dash so the component has length > 1)
+			if i < len(str) && !isASCIIDigit(rune(str[i])) {
+				t = componentTypePreRelease
+			}
 		} else if isASCIIDigit(rune(str[i])) {
 			// Mark as numeric
 			t = componentTypeNumeric
@@ -134,13 +138,10 @@ func decompose(str string) ([]component, error) {
 			if r == utf8.RuneError {
 				return out, ErrInvalidUTF8
 			}
-			if isASCIIDigit(r) {
-				if t != componentTypeNumeric {
-					// Run completed (do not consume this digit)
-					break
-				}
-			} else if t == componentTypeNumeric {
-				// Run completed (do not consume this non-digit)
+			if (isASCIIDigit(r) != (t == componentTypeNumeric)) ||
+				(r == '-' && t != componentTypePreRelease) || // "---" is a valid pre-release component
+				r == '+' {
+				// Run completed (do not consume this rune)
 				break
 			}
 			// Add rune to current run

@@ -90,7 +90,7 @@ var specTests = []testInstance{
 	t("10", opGT, "2"),
 }
 
-var coverageTests = []testInstance{
+var miscTests = []testInstance{
 	// Empty strings
 	t("", opEQ, ""),
 	t("1", opGT, ""),
@@ -98,9 +98,21 @@ var coverageTests = []testInstance{
 	// Invalid UTF8
 	t("\xc3\x28", shouldError, ""),
 	t("", shouldError, "\xc3\x28"),
+	// Check boundary between textual and prerelease
+	t("a-a", opLT, "a"),
+	// Check boundary between textual and appendix
+	t("a+a", opEQ, "a"),
+	// Dash is included in prerelease comparison (if stripped it will be a smaller component)
+	// Note that a-a < a=a regardless since the prerelease splits the component creating a smaller first component; 0 is added to force splitting regardless
+	t("a0-a", opLT, "a0=a"),
+	// Pre-releases must contain only non-digit
+	t("1.16.5-10", opGT, "1.16.5"),
+	// Pre-releases can have multiple dashes (should not be split)
+	// Reasoning for test data: "p-a!" > "p-a-" (correct); "p-a!" < "p-a t-" (what happens if every dash creates a new component)
+	t("-a-", opGT, "-a!"),
 }
 
-var allTests = append(append([]testInstance{}, specTests...), coverageTests...)
+var allTests = append(append([]testInstance{}, specTests...), miscTests...)
 
 func TestCompare(t *testing.T) {
 	for _, v := range allTests {

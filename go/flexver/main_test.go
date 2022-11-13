@@ -214,8 +214,8 @@ func TestEqualError(t *testing.T) {
 }
 
 func ExampleCompare() {
-	fmt.Println(Compare("1.0.0", "1.0.1"), Compare("10.0.0", "1.0.1"))
-	// Output: -1 1
+	fmt.Println(Compare("1.0.1", "1.0.3"), Compare("10.0.0", "1.0.1"))
+	// Output: -2 1
 }
 
 func ExampleLess() {

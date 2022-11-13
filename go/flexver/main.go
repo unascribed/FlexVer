@@ -39,6 +39,16 @@ type component struct {
 	value []rune
 }
 
+func signum(v int) int32 {
+	if v > 0 {
+		return 1
+	} else if v == 0 {
+		return 0
+	} else {
+		return -1
+	}
+}
+
 // compare determines if this component is less than, equal to or greater than the given component.
 // A negative, zero or positive integer respectively indicates this result.
 func (compA component) compare(compB component) int32 {
@@ -54,8 +64,8 @@ func (compA component) compare(compB component) int32 {
 		}
 		aLen := len(compA.value) - i
 		if aLen != len(compB.value)-j {
-			// Lengths differ; compare by length
-			return int32(aLen - (len(compB.value) - j))
+			// Lengths differ; compare by length - signum used to prevent overflow
+			return signum(aLen - (len(compB.value) - j))
 		}
 		// Compare by digits
 		for ; i < aLen; i, j = i+1, j+1 {
@@ -90,8 +100,8 @@ func (compA component) compare(compB component) int32 {
 			return a - b
 		}
 	}
-	// Compare by length
-	return int32(len(compA.value) - len(compB.value))
+	// Compare by length - signum used to prevent overflow
+	return signum(len(compA.value) - len(compB.value))
 }
 
 // ErrInvalidUTF8 is returned from the *Error functions when a passed string is invalid UTF-8.

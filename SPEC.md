@@ -1,4 +1,4 @@
-# FlexVer Specification 1.0.1_07
+# FlexVer Specification 1.0.1_08
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed
@@ -88,8 +88,9 @@ return componentA.length <=> componentB.length
 ### Numeric
 This may either be implemented by parsing the component as an integer and comparing the integers,
 or as a codepoint-wise comparison following the same rules an integer parser would. Either is
-considered reasonable, with the advantage of the codepoint-wise version being there is no limit to
-the length of a component. Both are described below.
+considered reasonable — the advantage of the codepoint-wise version being there is no limit to
+the length of a component, while the advantage of the integer-parse version being it is easier to
+implement. Both are described below.
 
 #### Integer parse
 Parse the component as an integer type, and return the difference between them. In psuedocode:
@@ -134,7 +135,7 @@ if (component.length == 1) return component
 let i = 0
 while (i < a.length && digit(a[i]) == 0):
 	i++
-return component.slice(i, component.length);
+return component.slice(i, component.length)
 ```
 
 ### Pre-release

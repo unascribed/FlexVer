@@ -2,7 +2,6 @@ package com.unascribed.flexver;
 
 import java.util.List;
 
-import com.unascribed.flexver.FlexVerComparator.LiteralVersionComponent;
 import com.unascribed.flexver.FlexVerComparator.NumericVersionComponent;
 import com.unascribed.flexver.FlexVerComparator.SemVerPrereleaseVersionComponent;
 import com.unascribed.flexver.FlexVerComparator.VersionComponent;
@@ -37,10 +36,10 @@ public class FlexVerBasicTest {
 				int color = 90;
 				if (vc instanceof NumericVersionComponent) {
 					color = 96;
-				} else if (vc instanceof LiteralVersionComponent) {
-					color = 95;
 				} else if (vc instanceof SemVerPrereleaseVersionComponent) {
 					color = 91;
+				} else {
+					color = 95;
 				}
 				out.append("\u001B[").append(color).append("m");
 			}

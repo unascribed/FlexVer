@@ -1,6 +1,6 @@
 # FlexVer-Java
 
-A basic Java implementation of FlexVer, originally written for Quilt Loader.
+The original Java implementation of FlexVer, initially written for Quilt Loader.
 
 ## Getting it
 
@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.unascribed:flexver-java:1.0.1'
+	implementation 'com.unascribed:flexver-java:1.0.2'
 }
 ```
 

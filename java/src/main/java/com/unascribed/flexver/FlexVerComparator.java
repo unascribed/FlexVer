@@ -46,7 +46,7 @@ public class FlexVerComparator {
 	};
 	
 	// @VisibleForTesting
-	static abstract class VersionComponent {
+	static class VersionComponent {
 		private final int[] codepoints;
 
 		public VersionComponent(int[] codepoints) {
@@ -56,21 +56,7 @@ public class FlexVerComparator {
 		public int[] codepoints() {
 			return codepoints;
 		}
-		
-		public abstract int compareTo(VersionComponent that);
-		
-		@Override
-		public String toString() {
-			return new String(codepoints, 0, codepoints.length);
-		}
-		
-	}
-	
-	// @VisibleForTesting
-	static class LiteralVersionComponent extends VersionComponent {
-		public LiteralVersionComponent(int[] codepoints) { super(codepoints); }
 
-		@Override
 		public int compareTo(VersionComponent that) {
 			if (that == NULL) return 1;
 			int[] a = this.codepoints();
@@ -84,10 +70,16 @@ public class FlexVerComparator {
 			
 			return a.length - b.length;
 		}
+		
+		@Override
+		public String toString() {
+			return new String(codepoints, 0, codepoints.length);
+		}
+		
 	}
 	
 	// @VisibleForTesting
-	static class SemVerPrereleaseVersionComponent extends LiteralVersionComponent {
+	static class SemVerPrereleaseVersionComponent extends VersionComponent {
 		public SemVerPrereleaseVersionComponent(int[] codepoints) { super(codepoints); }
 		
 		@Override
@@ -106,25 +98,23 @@ public class FlexVerComparator {
 		public int compareTo(VersionComponent that) {
 			if (that == NULL) return 1;
 			if (that instanceof NumericVersionComponent) {
-				int[] a = this.codepoints();
-				int[] b = that.codepoints();
-				a = removeLeadingZeroes(a);
-				b = removeLeadingZeroes(b);
-				if (a.length != b.length) return Integer.compare(a.length, b.length);
+				int[] a = removeLeadingZeroes(this.codepoints());
+				int[] b = removeLeadingZeroes(that.codepoints());
+				if (a.length != b.length) return a.length-b.length;
 				for (int i = 0; i < a.length; i++) {
-					int ad = Character.digit(a[i], 10);
-					int bd = Character.digit(b[i], 10);
+					int ad = a[i];
+					int bd = b[i];
 					if (ad != bd) return ad-bd;
 				}
 				return 0;
 			}
-			return toString().compareTo(that.toString());
+			return super.compareTo(that);
 		}
 		
 		private int[] removeLeadingZeroes(int[] a) {
 			if (a.length == 1) return a;
 			int i = 0;
-			while (i < a.length && Character.digit(a[i], 10) == 0) {
+			while (i < a.length && a[i] == '0') {
 				i++;
 			}
 			return Arrays.copyOfRange(a, i, a.length);
@@ -145,13 +135,12 @@ public class FlexVerComparator {
 		List<VersionComponent> out = new ArrayList<>();
 		int j = 0;
 		for (int i = 0; i < str.length(); i++) {
-			if (i > 0 && Character.isHighSurrogate(str.charAt(i-1)) && Character.isLowSurrogate(str.charAt(i))) continue;
 			int cp = str.codePointAt(i);
+			if (Character.charCount(cp) == 2) i++;
 			if (cp == '+') break; // remove appendices
 			boolean number = isAsciiDigit(cp);
 			if (number != lastWasNumber) {
 				out.add(createComponent(lastWasNumber, accum, j));
-				accum = new int[totalCodepoints];
 				j = 0;
 				lastWasNumber = number;
 			}
@@ -173,7 +162,7 @@ public class FlexVerComparator {
 		} else if (s.length > 1 && s[0] == '-') {
 			return new SemVerPrereleaseVersionComponent(s);
 		} else {
-			return new LiteralVersionComponent(s);
+			return new VersionComponent(s);
 		}
 	}
 

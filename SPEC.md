@@ -166,7 +166,6 @@ compared to which, *null is greater*. This implements the SemVer rule that `1.0-
 * 13w02a - `13 w 02 a`
 * 0.6.0-1.18.x - `0 . 6 . 0 - 1 . 18 .x`
 * 1.0 - `1 . 0`
-* 1.0.1 - `1 . 0 . 1`
 
 ## Sample Comparisons
 

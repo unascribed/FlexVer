@@ -1,4 +1,4 @@
-# FlexVer Specification 1.0.1_08
+# FlexVer Specification 1.0.1_09
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed
@@ -47,11 +47,11 @@ cases in FlexVer.
 Given this information, we can annotate the above decomposition with its component types,
 represented as `t`, `n`, `p`, and `a`:
 
-<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> b<b>1</b> a<b>+exp</b> n<b>2</b></code>
+<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> n<b>1</b> a<b>+exp</b> n<b>2</b></code>
 
 Appendices are discarded, leaving us with:
 
-<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> b<b>1</b></code>
+<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> n<b>1</b></code>
 
 > **Note**
 > This annotated form will not be used again, and is presented here for illustration. The type of a

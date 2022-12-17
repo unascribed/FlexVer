@@ -8,10 +8,7 @@
 
 #![feature(pattern)]
 
-use std::cmp::{
-    Ordering,
-    Ordering::{Equal, Greater, Less},
-};
+use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::collections::VecDeque;
 use std::str::pattern::Pattern;
 
@@ -23,7 +20,7 @@ enum SortingType {
 }
 
 impl SortingType {
-    fn to_string(self) -> String {
+    fn into_string(self) -> String {
         match self {
             Self::Numerical(_, a) | Self::Lexical(a) | Self::SemverPrerelease(a) => a,
         }
@@ -38,7 +35,7 @@ where
     if let Some(index) = loc {
         Some(s.split_at(index))
     } else {
-        Some((s, &""))
+        Some((s, ""))
     }
 }
 
@@ -69,16 +66,14 @@ fn decompose(str_in: &str) -> VecDeque<SortingType> {
                 s = right.to_owned();
                 last_numeric = false;
             }
-        } else {
-            if let Some((left, right)) = split_once_rest(&s, |c: char| c.is_ascii_digit()) {
-                out.push_back(if is_semver_prerelease(left) {
-                    SortingType::SemverPrerelease(left.to_string())
-                } else {
-                    SortingType::Lexical(left.to_string())
-                });
-                s = right.to_owned();
-                last_numeric = true;
-            }
+        } else if let Some((left, right)) = split_once_rest(&s, |c: char| c.is_ascii_digit()) {
+            out.push_back(if is_semver_prerelease(left) {
+                SortingType::SemverPrerelease(left.to_string())
+            } else {
+                SortingType::Lexical(left.to_string())
+            });
+            s = right.to_owned();
+            last_numeric = true;
         }
     }
 
@@ -105,12 +100,12 @@ impl Iterator for VersionComparisonIterator {
 }
 
 pub fn compare(left: &str, right: &str) -> Ordering {
-    let mut iter = VersionComparisonIterator {
+    let iter = VersionComparisonIterator {
         left: decompose(left),
         right: decompose(right),
     };
 
-    while let Some(next) = iter.next() {
+    for next in iter {
         use SortingType::*;
 
         let current = match next {
@@ -130,15 +125,17 @@ pub fn compare(left: &str, right: &str) -> Ordering {
             }
             (Some(l), Some(r)) => match (l, r) {
                 (Numerical(l, _), Numerical(r, _)) => l.cmp(&r),
-                (l, r) => l.to_string().cmp(&r.to_string()),
+                (l, r) => l.into_string().cmp(&r.into_string()),
             },
             (None, None) => unreachable!(),
         };
+
         if current != Equal {
             return current;
         }
     }
-    return Equal;
+
+    Equal
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -146,7 +143,7 @@ pub struct FlexVer<'a>(pub &'a str);
 
 impl PartialEq for FlexVer<'_> {
     fn eq(&self, other: &Self) -> bool {
-        compare(&self.0, &other.0) == Equal
+        compare(self.0, other.0) == Equal
     }
 }
 
@@ -154,13 +151,13 @@ impl Eq for FlexVer<'_> {}
 
 impl PartialOrd for FlexVer<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(compare(&self.0, &other.0))
+        Some(compare(self.0, other.0))
     }
 }
 
 impl Ord for FlexVer<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
-        compare(&self.0, &other.0)
+        compare(self.0, other.0)
     }
 }
 

@@ -8,7 +8,7 @@ You can either copy (and rename) [lib.rs](src/lib.rs) wholesale into your projec
 
 ```toml
 [dependencies]
-flexver-rs = "0.1.0"
+flexver-rs = "0.1.2"
 ```
 
 ## Usage

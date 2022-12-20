@@ -6,11 +6,8 @@
  * See <http://creativecommons.org/publicdomain/zero/1.0/>
  */
 
-#![feature(pattern)]
-
 use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::collections::VecDeque;
-use std::str::pattern::Pattern;
 
 #[derive(Debug)]
 enum SortingType {
@@ -27,11 +24,12 @@ impl SortingType {
     }
 }
 
-fn split_once_rest<'a, P>(s: &'a str, pat: P) -> Option<(&str, &str)>
-where
-    P: Pattern<'a>,
-{
-    let loc = s.find(pat);
+fn split_once_rest<'a>(s: &'a str, numeric: bool) -> Option<(&str, &str)> {
+    let loc = s.find(if numeric {
+        |c: char| c.is_ascii_digit()
+    } else {
+        |c: char| !c.is_ascii_digit()
+    });
     if let Some(index) = loc {
         Some(s.split_at(index))
     } else {
@@ -58,7 +56,7 @@ fn decompose(str_in: &str) -> VecDeque<SortingType> {
 
     while !s.is_empty() {
         if last_numeric {
-            if let Some((left, right)) = split_once_rest(&s, |c: char| !c.is_ascii_digit()) {
+            if let Some((left, right)) = split_once_rest(&s, false) {
                 out.push_back(SortingType::Numerical(
                     left.parse::<i64>().unwrap(),
                     left.to_owned(),
@@ -66,7 +64,7 @@ fn decompose(str_in: &str) -> VecDeque<SortingType> {
                 s = right.to_owned();
                 last_numeric = false;
             }
-        } else if let Some((left, right)) = split_once_rest(&s, |c: char| c.is_ascii_digit()) {
+        } else if let Some((left, right)) = split_once_rest(&s, true) {
             out.push_back(if is_semver_prerelease(left) {
                 SortingType::SemverPrerelease(left.to_string())
             } else {

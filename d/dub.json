@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Su"
+	],
+	"copyright": "Copyright © 2022, Su",
+	"description": "D implementation of FlexVer",
+	"license": "CC0-1.0",
+	"name": "flexver-d"
+}

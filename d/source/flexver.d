@@ -201,15 +201,14 @@ private bool isValid(Component component) pure @safe
 	return true;
 }
 
-version (unittest)
+pure @safe unittest
 {
-	private alias CT_T = ComponentType.Textual;
-	private alias CT_N = ComponentType.Numeric;
-	private alias CT_P = ComponentType.PreRelease;
+	alias CT_T = ComponentType.Textual;
+	alias CT_N = ComponentType.Numeric;
+	alias CT_P = ComponentType.PreRelease;
 
-	private auto componentList(Args...)(Args args) pure @safe //may throw in out contract
-
-	if ((args.length & 1) == 0)
+	auto componentList(Args...)(Args args) pure @safe
+	if ((args.length & 1) == 0) //may throw in out contract
 	out (r; isValid(r))
 	{
 		Component[] result;
@@ -229,10 +228,7 @@ version (unittest)
 		}
 		return result;
 	}
-}
 
-pure @safe unittest
-{
 	//dfmt off
 	assert(decompose("b1.7.3") == componentList(CT_T, "b", CT_N, "1", CT_T, ".", CT_N, "7", CT_T, ".", CT_N, "3"));
 	assert(decompose("b1.2.6") == componentList(CT_T, "b", CT_N, "1", CT_T, ".", CT_N, "2", CT_T, ".", CT_N, "6"));
@@ -298,7 +294,8 @@ private struct Component
 
 	pure @safe unittest
 	{
-		immutable foo = Component(ComponentType.Textual, "the quick brown fox jumped over the lazy dog");
+		immutable foo = Component(ComponentType.Textual,
+				"the quick brown fox jumped over the lazy dog");
 		immutable bar = Component(ComponentType.Textual, "the quick brown fox");
 		assert(foo.compareText(bar) > 0);
 	}

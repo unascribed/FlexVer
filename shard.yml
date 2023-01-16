@@ -3,6 +3,10 @@ description: A Crystal implementation of FlexVer
 repository: "https://github.com/unascribed/FlexVer"
 version: 0.1.0
 
+targets:
+  flexver:
+    main: crystal/src/flexver.cr
+
 authors:
   - Jill "oatmealine" Monoids <oatmealine@disroot.org>
 

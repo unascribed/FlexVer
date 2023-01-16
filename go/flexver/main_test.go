@@ -28,11 +28,11 @@ const (
 	opGT = 1
 )
 
-func RunCompare(t *testing.T, lefthand string, righthand string, ordening int) {
+func RunCompare(t *testing.T, lefthand string, righthand string, ordering int) {
 	res := Compare(lefthand, righthand)
-	if (ordening == opLT && !(res < 0)) ||
-		(ordening == opEQ && !(res == 0)) ||
-		(ordening == opGT && !(res > 0)) {
+	if (ordering == opLT && !(res < 0)) ||
+		(ordering == opEQ && !(res == 0)) ||
+		(ordering == opGT && !(res > 0)) {
 		t.Errorf("Compare returned %v", res)
 	}
 
@@ -46,9 +46,9 @@ func RunCompare(t *testing.T, lefthand string, righthand string, ordening int) {
 	}
 }
 
-func RunLess(t *testing.T, lefthand string, righthand string, ordening int) {
+func RunLess(t *testing.T, lefthand string, righthand string, ordering int) {
 	res := Less(lefthand, righthand)
-	if ordening == opLT {
+	if ordering == opLT {
 		if !res {
 			t.Error("Less incorrectly returned false")
 		}
@@ -68,9 +68,9 @@ func RunLess(t *testing.T, lefthand string, righthand string, ordening int) {
 	}
 }
 
-func RunEqual(t *testing.T, lefthand string, righthand string, ordening int) {
+func RunEqual(t *testing.T, lefthand string, righthand string, ordering int) {
 	res := Equal(lefthand, righthand)
-	if ordening == opEQ {
+	if ordering == opEQ {
 		if !res {
 			t.Error("Equal incorrectly returned false")
 		}

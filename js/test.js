@@ -35,9 +35,9 @@ ENABLED_TESTS.forEach(test => {
 				
 				var lefthand = split[0];
 				var righthand = split[2];
-				var ordening = split[1];
+				var ordering = split[1];
 
-				return runTest(lefthand, righthand, ordening)
+				return runTest(lefthand, righthand, ordering)
 			})
 	})
 })

@@ -10,6 +10,6 @@ targets:
 authors:
   - Jill "oatmealine" Monoids <oatmealine@disroot.org>
 
-crystal: >= 1.6.2, < 2
+crystal: ">= 1.6.2, < 2"
 
 license: CC0-1.0

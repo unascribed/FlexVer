@@ -43,7 +43,7 @@ public class FlexVerBasicTest {
 			.map(line -> {
 				String[] split = line.split(" ", -1);
 				if (split.length != 3) throw new IllegalArgumentException("Line formatted incorrectly, expected 2 spaces: "+line);
-				return Arguments.of(split[0], split[2], Ordering.fromStr(split[1]));
+				return Arguments.of(split[0], split[2], Ordering.fromString(split[1]));
 			});
 	}
 }

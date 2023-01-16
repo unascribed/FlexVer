@@ -218,14 +218,6 @@ mod tests {
     }
 
     #[test]
-    fn test_clamp() {
-        assert_eq!(
-            FlexVer("1.1.0"),
-            FlexVer("1.1.0").clamp(FlexVer("1.0.0"), FlexVer("1.2.0"))
-        );
-    }
-
-    #[test]
     fn test_min() {
         assert_eq!(FlexVer("1.0.0"), FlexVer("1.0.0").min(FlexVer("1.0.0")));
         assert_eq!(FlexVer("a1.2.6"), FlexVer("b1.7.3").min(FlexVer("a1.2.6")));
@@ -237,5 +229,13 @@ mod tests {
         assert_eq!(FlexVer("b1.7.3"), FlexVer("b1.7.3").max(FlexVer("a1.2.6")));
         assert_eq!(FlexVer("b1.2.6"), FlexVer("b1.2.6").max(FlexVer("a1.7.3")));
         assert_eq!(FlexVer("1.0.0"), FlexVer("1.0.0").max(FlexVer("1.0.0")));
+    }
+
+    #[test]
+    fn test_clamp() {
+        assert_eq!(
+            FlexVer("1.1.0"),
+            FlexVer("1.1.0").clamp(FlexVer("1.0.0"), FlexVer("1.2.0"))
+        );
     }
 }

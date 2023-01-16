@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 public enum Ordering {
-    Less("<"),
-    Equal("="),
-    Greater(">");
+    LESS("<"),
+    EQUAL("="),
+    GREATER(">");
 
     public final String charRepresentation;
 
@@ -21,18 +21,18 @@ public enum Ordering {
 
     public Ordering invert() {
         switch (this) {
-            case Less:
-                return Ordering.Greater;
-            case Equal:
+            case LESS:
+                return Ordering.GREATER;
+            case EQUAL:
                 return this;
-            case Greater:
-                return Ordering.Less;
+            case GREATER:
+                return Ordering.LESS;
             default:
                 throw new IllegalArgumentException();
         }
     }
 
-    public static Ordering fromStr(String str) {
+    public static Ordering fromString(String str) {
         return Arrays.stream(Ordering.values())
             .filter(ord -> ord.charRepresentation.equals(str))
             .findFirst()
@@ -43,10 +43,10 @@ public enum Ordering {
      * Converts an integer returned by a method like {@link FlexVerComparator#compare(String, String)} to an {@link Ordering}
      */
     public static Ordering fromComparison(int i) {
-        if (i < 0) return Ordering.Less;
-        if (i == 0) return Ordering.Equal;
-        if (i > 0) return Ordering.Greater;
+        if (i < 0) return Ordering.LESS;
+        if (i == 0) return Ordering.EQUAL;
+        if (i > 0) return Ordering.GREATER;
 
-        throw new IllegalStateException();
+        throw new AssertionError();
     }
 }

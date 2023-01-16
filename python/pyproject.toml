@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flexver"
+license = { text = "CC0-1.0" }
+authors = [
+    { name="Infinidoge", email="infinidoge@inx.moe" },
+]
+description = "A SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild, designed to sort versions like people do"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+    "License :: Public Domain",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/unascribed/FlexVer"
+"Source" = "https://github.com/unascribed/FlexVer/tree/trunk/python"
+"Issues" = "https://github.com/unascribed/FlexVer/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "flexver.__version__" }

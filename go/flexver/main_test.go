@@ -153,6 +153,7 @@ func ProcessTestfile(t *testing.T, test string) {
 }
 
 func TestInvalid(t *testing.T) {
+	// Run through some invalid inputs and fail the test if it didn't return an error
 	_, err := CompareError("\xc3\x28", "")
 	if err == nil {
 		t.Fatal()
@@ -177,6 +178,52 @@ func TestInvalid(t *testing.T) {
 	if err == nil {
 		t.Fatal()
 	}
+}
+
+func TestInvalidPanic(t *testing.T) {
+	// Ensures that the AssertPanic function is working, as Go doesn't have any built-in way to assert a function panics
+	if !DetectPanic(func() { panic("Test") }) || DetectPanic(func() {}) {
+		t.Fatal()
+	}
+
+	// Run through some invalid inputs and fail the test if it doesn't panic
+	if !DetectPanic(func() { Compare("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Less("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Equal("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Compare("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Less("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Equal("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+}
+
+// Will return true if the given function panics and false if it returned correctly
+func DetectPanic(f func()) (ret bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			ret = true
+		}
+	}()
+
+	f()
+
+	return false // If we reached this statement, we didn't panic
 }
 
 func TestBasicSort(t *testing.T) {

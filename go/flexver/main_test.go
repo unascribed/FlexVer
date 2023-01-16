@@ -92,61 +92,66 @@ func RunEqual(t *testing.T, lefthand string, righthand string, ordering int) {
 
 func TestStandardized(t *testing.T) {
 	for _, test := range ENABLED_TESTS {
-		file, err := os.Open("../../test/" + test)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			if strings.HasPrefix(line, "#") {
-				continue
-			}
-			if len(line) == 0 {
-				continue
-			}
-
-			split := strings.Split(line, " ")
-			if len(split) != 3 {
-				t.Fatal("Line formatted incorrectly, expected 2 spaces: " + line)
-			}
-
-			ord := 0
-			switch split[1] {
-			case "<":
-				ord = opLT
-			case "=":
-				ord = opEQ
-			case ">":
-				ord = opGT
-			}
-
-			lefthand := split[0]
-			righthand := split[2]
-
-			t.Run(line, func(t *testing.T) {
-				t.Run("Compare", func(t *testing.T) {
-					RunCompare(t, lefthand, righthand, ord)
-				})
-
-				t.Run("Less", func(t *testing.T) {
-					RunLess(t, lefthand, righthand, ord)
-				})
-
-				t.Run("Equal", func(t *testing.T) {
-					RunEqual(t, lefthand, righthand, ord)
-				})
-			})
-		}
-
-		if err := scanner.Err(); err != nil {
-			t.Fatal(err)
-		}
+		ProcessTestfile(t, test)
 	}
 }
+
+func ProcessTestfile(t *testing.T, test string) {
+	file, err := os.Open("../../test/" + test)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		if len(line) == 0 {
+			continue
+		}
+
+		split := strings.Split(line, " ")
+		if len(split) != 3 {
+			t.Fatal("Line formatted incorrectly, expected 2 spaces: " + line)
+		}
+
+		ord := 0
+		switch split[1] {
+		case "<":
+			ord = opLT
+		case "=":
+			ord = opEQ
+		case ">":
+			ord = opGT
+		}
+
+		lefthand := split[0]
+		righthand := split[2]
+
+		t.Run(line, func(t *testing.T) {
+			t.Run("Compare", func(t *testing.T) {
+				RunCompare(t, lefthand, righthand, ord)
+			})
+
+			t.Run("Less", func(t *testing.T) {
+				RunLess(t, lefthand, righthand, ord)
+			})
+
+			t.Run("Equal", func(t *testing.T) {
+				RunEqual(t, lefthand, righthand, ord)
+			})
+		})
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestInvalid(t *testing.T) {
 	_, err := CompareError("\xc3\x28", "")
 	if err == nil {

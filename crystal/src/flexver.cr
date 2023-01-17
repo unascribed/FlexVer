@@ -51,8 +51,12 @@ struct FlexVer
         @type = ComponentType::Null
       when .ascii_number?
         @type = ComponentType::Numeric
-      when '-', @str.size > 1
-        @type = ComponentType::PreRelease
+      when '-'
+        if @str.size > 1
+          @type = ComponentType::PreRelease
+        else
+          @type = ComponentType::Textual
+        end
       when '+'
         @type = ComponentType::Appendix
       else
@@ -99,10 +103,32 @@ struct FlexVer
     end
   end
 
+  private def get_component_split_type(c : Char)
+    case c
+    when '-', '+'
+      0
+    when .ascii_number?
+      1
+    else
+      2
+    end
+  end
+
   # Parses `version_str` and creates a version object.
   def initialize(version_str : String)
-    chunked = version_str.chars.chunks &.ascii_number?
-    components = chunked.map { |_, v| Component.new(v.join) }
+    chunked = version_str.chars.chunks { |n| get_component_split_type(n) }
+    components = chunked
+      # Merge pre-releases as outlined in #12 - hacky, but works
+      .reduce([] of String) do |sum, c|
+        str = c[1].join
+        if sum[-1]?.try &.starts_with?('-') && !str[0].ascii_number?
+          sum[-1] = sum[-1] + str
+        else
+          sum << str
+        end
+        sum
+      end
+      .map { |v| Component.new(v) }
     @components = components.take_while { |c| c.type != ComponentType::Appendix }
   end
 

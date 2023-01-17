@@ -24,19 +24,6 @@ impl SortingType {
     }
 }
 
-fn split_once_rest<'a>(s: &'a str, numeric: bool) -> Option<(&str, &str)> {
-    let loc = s.find(if numeric {
-        |c: char| c.is_ascii_digit()
-    } else {
-        |c: char| !c.is_ascii_digit()
-    });
-    if let Some(index) = loc {
-        Some(s.split_at(index))
-    } else {
-        Some((s, ""))
-    }
-}
-
 fn is_semver_prerelease(s: &str) -> bool {
     s.len() > 1 && s.starts_with('-')
 }
@@ -46,33 +33,73 @@ fn decompose(str_in: &str) -> VecDeque<SortingType> {
         return VecDeque::new();
     }
 
-    let mut last_numeric = str_in.starts_with(|c: char| c.is_ascii_digit());
-    let mut s = str_in.to_owned();
-    let mut out: VecDeque<SortingType> = VecDeque::new();
-
-    if let Some((left, _)) = s.split_once('+') {
-        s = left.to_owned();
+    let s = if let Some((left, _)) = str_in.split_once('+') {
+        left
+    } else {
+        str_in
     };
 
-    while !s.is_empty() {
-        if last_numeric {
-            if let Some((left, right)) = split_once_rest(&s, false) {
-                out.push_back(SortingType::Numerical(
-                    left.parse::<i64>().unwrap(),
-                    left.to_owned(),
-                ));
-                s = right.to_owned();
-                last_numeric = false;
-            }
-        } else if let Some((left, right)) = split_once_rest(&s, true) {
-            out.push_back(if is_semver_prerelease(left) {
-                SortingType::SemverPrerelease(left.to_string())
+    let mut out: VecDeque<SortingType> = VecDeque::new();
+    let mut current = String::new();
+
+    let mut currently_numeric = s.starts_with(|c: char| c.is_ascii_digit());
+    let mut skip = s.starts_with('-');
+
+    fn handle_split(
+        current: &str,
+        c: Option<&char>,
+        currently_numeric: bool,
+    ) -> Option<SortingType> {
+        let numeric = if let Some(c) = c {
+            c.is_ascii_digit()
+        } else {
+            false
+        };
+
+        use SortingType::*;
+
+        if currently_numeric {
+            if numeric {
+                return None;
             } else {
-                SortingType::Lexical(left.to_string())
-            });
-            s = right.to_owned();
-            last_numeric = true;
+                return Some(Numerical(
+                    current.parse::<i64>().unwrap(),
+                    current.to_owned(),
+                ));
+            }
         }
+
+        if !(numeric || c == Some(&'-') || c.is_none()) {
+            return None;
+        }
+
+        if is_semver_prerelease(current) {
+            if c == Some(&'-') {
+                // Pre-releases can have multiple dashes
+                None
+            } else {
+                Some(SemverPrerelease(current.to_owned()))
+            }
+        } else {
+            Some(Lexical(current.to_owned()))
+        }
+    }
+
+    for c in s.chars() {
+        if let Some(part) = handle_split(&current, Some(&c), currently_numeric) {
+            if skip {
+                skip = false;
+            } else {
+                out.push_back(part);
+                current.clear();
+                currently_numeric = c.is_ascii_digit();
+            }
+        }
+        current.push(c);
+    }
+
+    if let Some(part) = handle_split(&current, None, currently_numeric) {
+        out.push_back(part);
     }
 
     out

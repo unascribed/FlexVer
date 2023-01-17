@@ -1,4 +1,4 @@
-# FlexVer Specification 1.0.1_09
+# FlexVer Specification 1.1.0
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed
@@ -28,17 +28,20 @@ used in the rest of this document.
 ## Decomposition
 The core of a FlexVer comparison is the *decomposition* of the input string into a series of
 *components*. A component is a run of codepoints that are either all digits, or all are not digits.
+Additionally, for compatibility with SemVer, ASCII hyphen-minus `-` and ASCII plus `+` are considered
+"separator" characters, that will also split components themselves.
+
 Decompositions in this document will be represented with spaces separating all components, like so:
 
-`1 . 0 . 1 _ 01 -pre 1 +exp 2`
+`1 . 0 . 1 _ 01 a -pre 1 +exp 2`
 
 Given this fundamental decomposition, the components can be split into four types, based on their
 contents:
 
-1. **Textual** - the run is entirely *non-digit* codepoints
+1. **Textual** - the run is entirely *non-digit* codepoints, and does not contain a *separator* (unless of length 1)
 2. **Numeric** - the run is entirely *digit* codepoints
-3. **Pre-release** - the run's first codepoint is ASCII hyphen-minus (`-`) **and is longer than one codepoint**
-4. **Appendix** - the run's first codepoint is ASCII plus (`+`)
+3. **Pre-release** - the run is entirely *non-digit* codepoints, its first codepoint is ASCII hyphen-minus (`-`), **and it is longer than one codepoint**
+4. **Appendix** - the run's is entirely *non-digit* codepoints, and its first codepoint is ASCII plus (`+`)
 
 Appendices are a special case. If an appendix component is encountered, that component and all of
 those following it are disregarded for comparison. This is one of the two SemVer compatibility special
@@ -47,11 +50,11 @@ cases in FlexVer.
 Given this information, we can annotate the above decomposition with its component types,
 represented as `t`, `n`, `p`, and `a`:
 
-<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> n<b>1</b> a<b>+exp</b> n<b>2</b></code>
+<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> t<b>a</b> p<b>-pre</b> n<b>1</b> a<b>+exp</b> n<b>2</b></code>
 
 Appendices are discarded, leaving us with:
 
-<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> p<b>-pre</b> n<b>1</b></code>
+<code>n<b>1</b> t<b>.</b> n<b>0</b> t<b>.</b> n<b>1</b> t<b>_</b> n<b>01</b> t<b>a</b> p<b>-pre</b> n<b>1</b></code>
 
 > **Note**
 > This annotated form will not be used again, and is presented here for illustration. The type of a
@@ -166,28 +169,9 @@ compared to which, *null is greater*. This implements the SemVer rule that `1.0-
 * 13w02a - `13 w 02 a`
 * 0.6.0-1.18.x - `0 . 6 . 0 - 1 . 18 .x`
 * 1.0 - `1 . 0`
+* a-a - `a -a`
 
 ## Sample Comparisons
 
-* b1.7.3 > a1.2.6
-* a1.1.2 < a1.1.2_01
-* 1.16.5-0.00.5 > 1.14.2-1.3.7
-* 1.0.0 < 1.0.0_01
-* 1.0.1 > 1.0.0_01
-* 0.17.1-beta.1 < 0.17.1
-* 0.17.1-beta.1 < 0.17.1-beta.2
-* 1.4.5_01 = 1.4.5_01+exp-1.17
-* 1.4.5_01 = 1.4.5_01+exp-1.17-moretext
-* 14w16a < 18w40b
-* 18w40a < 18w40b
-* 1.4.5_01+exp-1.17 < 18w40b (nonsense comparison)
-  * `1  . 4  . 5 _ 01 +exp- 1 . 17`
-  * `18 w 40 b / / /  /     / / / `
-* 13w02a < c0.3.0_01 (nonsense comparison)
-* 0.6.0-1.18.x < 0.9.beta-1.18.x
-* 36893488147419103232 < 36893488147419103233 (only if Codepoint-wise comparison for Numeric components is used, otherwise undefined)
-* 1.0 < 1.1
-* 1.0 < 1.0.1
-  * `1 . 0 / /`
-  * `1 . 0 . 1`
-* 10 > 2
+Please see the [test vectors](https://github.com/unascribed/FlexVer/blob/trunk/test/test_vectors.txt)
+used by the reference implementations.

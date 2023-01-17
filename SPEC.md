@@ -1,4 +1,4 @@
-# FlexVer Specification 1.1.0
+# FlexVer Specification 1.1.0_01
 
 This document describes the FlexVer algorithm at a high level. The concept behind FlexVer is to
 offer a standardized and SemVer-compatible intuitive version comparator. Its behavior is designed
@@ -41,7 +41,7 @@ contents:
 1. **Textual** - the run is entirely *non-digit* codepoints, and does not contain a *separator* (unless of length 1)
 2. **Numeric** - the run is entirely *digit* codepoints
 3. **Pre-release** - the run is entirely *non-digit* codepoints, its first codepoint is ASCII hyphen-minus (`-`), **and it is longer than one codepoint**
-4. **Appendix** - the run's is entirely *non-digit* codepoints, and its first codepoint is ASCII plus (`+`)
+4. **Appendix** - the run is entirely *non-digit* codepoints, and its first codepoint is ASCII plus (`+`)
 
 Appendices are a special case. If an appendix component is encountered, that component and all of
 those following it are disregarded for comparison. This is one of the two SemVer compatibility special

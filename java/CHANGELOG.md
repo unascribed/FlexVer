@@ -1,3 +1,5 @@
+# 1.1.0
+- Fixed inconsistent handling of an ambiguity in the spec related to prereleases
 
 # 1.0.2
 - Minor efficiency improvements

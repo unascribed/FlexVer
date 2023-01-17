@@ -84,7 +84,7 @@ function(a, b) {
 			var cp = str.codePointAt(i);
 			if (cp == 43) break; // remove appendices
 			var number = isAsciiDigit(cp);
-			if (number != lastWasNumber) {
+			if (number != lastWasNumber || (cp == 45 && accum.length > 0 && accum[0] != 45)) {
 				out.push(createComponent(lastWasNumber, accum));
 				accum = [];
 				lastWasNumber = number;

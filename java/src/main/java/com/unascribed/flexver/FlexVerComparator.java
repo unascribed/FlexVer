@@ -139,7 +139,7 @@ public class FlexVerComparator {
 			if (Character.charCount(cp) == 2) i++;
 			if (cp == '+') break; // remove appendices
 			boolean number = isAsciiDigit(cp);
-			if (number != lastWasNumber) {
+			if (number != lastWasNumber || (cp == '-' && j > 0 && accum[0] != '-')) {
 				out.add(createComponent(lastWasNumber, accum, j));
 				j = 0;
 				lastWasNumber = number;

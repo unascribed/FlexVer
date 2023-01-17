@@ -9,11 +9,222 @@
 package flexver
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"reflect"
+	"strings"
 	"testing"
-	"unicode/utf8"
 )
+
+var ENABLED_TESTS = []string{
+	"test_vectors.txt",
+	"large.txt",
+}
+
+const (
+	opLT = -1
+	opEQ = 0
+	opGT = 1
+)
+
+func RunCompare(t *testing.T, lefthand string, righthand string, ordering int) {
+	res := Compare(lefthand, righthand)
+	if (ordering == opLT && !(res < 0)) ||
+		(ordering == opEQ && !(res == 0)) ||
+		(ordering == opGT && !(res > 0)) {
+		t.Errorf("Compare returned %v", res)
+	}
+
+	res2, err := CompareError(lefthand, righthand)
+	if err != nil {
+		t.Fatalf("CompareError returned an unexpected error: %v", err)
+	}
+
+	if res != res2 {
+		t.Error("CompareError did not give the same result as Compare")
+	}
+}
+
+func RunLess(t *testing.T, lefthand string, righthand string, ordering int) {
+	res := Less(lefthand, righthand)
+	if ordering == opLT {
+		if !res {
+			t.Error("Less incorrectly returned false")
+		}
+	} else {
+		if res {
+			t.Error("Less incorrectly returned true")
+		}
+	}
+
+	res2, err := LessError(lefthand, righthand)
+	if err != nil {
+		t.Fatalf("LessError returned an unexpected error: %v", err)
+	}
+
+	if res != res2 {
+		t.Error("LessError did not give the same result as Less")
+	}
+}
+
+func RunEqual(t *testing.T, lefthand string, righthand string, ordering int) {
+	res := Equal(lefthand, righthand)
+	if ordering == opEQ {
+		if !res {
+			t.Error("Equal incorrectly returned false")
+		}
+	} else {
+		if res {
+			t.Error("Equal incorrectly returned true")
+		}
+	}
+
+	res2, err := EqualError(lefthand, righthand)
+	if err != nil {
+		t.Fatalf("EqualError returned an unexpected error: %v", err)
+	}
+
+	if res != res2 {
+		t.Error("EqualError did not give the same result as Equal")
+	}
+}
+
+func TestStandardized(t *testing.T) {
+	for _, test := range ENABLED_TESTS {
+		ProcessTestfile(t, test)
+	}
+}
+
+func ProcessTestfile(t *testing.T, test string) {
+	file, err := os.Open("../../test/" + test)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		if len(line) == 0 {
+			continue
+		}
+
+		split := strings.Split(line, " ")
+		if len(split) != 3 {
+			t.Fatal("Line formatted incorrectly, expected 2 spaces: " + line)
+		}
+
+		ord := 0
+		switch split[1] {
+		case "<":
+			ord = opLT
+		case "=":
+			ord = opEQ
+		case ">":
+			ord = opGT
+		}
+
+		lefthand := split[0]
+		righthand := split[2]
+
+		t.Run(line, func(t *testing.T) {
+			t.Run("Compare", func(t *testing.T) {
+				RunCompare(t, lefthand, righthand, ord)
+			})
+
+			t.Run("Less", func(t *testing.T) {
+				RunLess(t, lefthand, righthand, ord)
+			})
+
+			t.Run("Equal", func(t *testing.T) {
+				RunEqual(t, lefthand, righthand, ord)
+			})
+		})
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestInvalid(t *testing.T) {
+	// Run through some invalid inputs and fail the test if it didn't return an error
+	_, err := CompareError("\xc3\x28", "")
+	if err == nil {
+		t.Fatal()
+	}
+	_, err = LessError("\xc3\x28", "")
+	if err == nil {
+		t.Fatal()
+	}
+	_, err = EqualError("\xc3\x28", "")
+	if err == nil {
+		t.Fatal()
+	}
+	_, err = CompareError("", "\xc3\x28")
+	if err == nil {
+		t.Fatal()
+	}
+	_, err = LessError("", "\xc3\x28")
+	if err == nil {
+		t.Fatal()
+	}
+	_, err = EqualError("", "\xc3\x28")
+	if err == nil {
+		t.Fatal()
+	}
+}
+
+func TestInvalidPanic(t *testing.T) {
+	// Ensures that the AssertPanic function is working, as Go doesn't have any built-in way to assert a function panics
+	if !DetectPanic(func() { panic("Test") }) || DetectPanic(func() {}) {
+		t.Fatal()
+	}
+
+	// Run through some invalid inputs and fail the test if it doesn't panic
+	if !DetectPanic(func() { Compare("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Less("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Equal("\xc3\x28", "") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Compare("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Less("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+	if !DetectPanic(func() { Equal("", "\xc3\x28") }) {
+		t.Fatal()
+	}
+
+}
+
+// Will return true if the given function panics and false if it returned correctly
+func DetectPanic(f func()) (ret bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			ret = true
+		}
+	}()
+
+	f()
+
+	return false // If we reached this statement, we didn't panic
+}
 
 func TestBasicSort(t *testing.T) {
 	var input = []string{
@@ -25,203 +236,6 @@ func TestBasicSort(t *testing.T) {
 	VersionSlice(input).Sort()
 	if !reflect.DeepEqual(input, expect) {
 		t.Fatalf("Failed to sort strings: got %v (expected %v)", input, expect)
-	}
-}
-
-const (
-	opLT        = -1
-	opEQ        = 0
-	opGT        = 1
-	shouldError = 10
-)
-
-func opChar(op int) string {
-	if op < 0 {
-		return "<"
-	} else if op == opEQ {
-		return "="
-	} else if op == opGT {
-		return ">"
-	} else {
-		return "!"
-	}
-}
-
-type testInstance struct {
-	a  string
-	op int
-	b  string
-}
-
-func t(a string, op int, b string) testInstance {
-	return testInstance{a: a, op: op, b: b}
-}
-
-func (i testInstance) name() string {
-	a := i.a
-	b := i.b
-	if !utf8.ValidString(a) {
-		a = "badutf8"
-	}
-	if !utf8.ValidString(b) {
-		b = "badutf8"
-	}
-	return a + " " + opChar(i.op) + " " + b
-}
-
-var specTests = []testInstance{
-	t("b1.7.3", opGT, "a1.2.6"),
-	t("a1.1.2", opLT, "a1.1.2_01"),
-	t("1.16.5-0.00.5", opGT, "1.14.2-1.3.7"),
-	t("1.0.0", opLT, "1.0.0_01"),
-	t("1.0.1", opGT, "1.0.0_01"),
-	t("0.17.1-beta.1", opLT, "0.17.1"),
-	t("0.17.1-beta.1", opLT, "0.17.1-beta.2"),
-	t("1.4.5_01", opEQ, "1.4.5_01+exp-1.17"),
-	t("1.4.5_01", opEQ, "1.4.5_01+exp-1.17-moretext"),
-	t("14w16a", opLT, "18w40b"),
-	t("18w40a", opLT, "18w40b"),
-	t("1.4.5_01+exp-1.17", opLT, "18w40b"),
-	t("13w02a", opLT, "c0.3.0_01"),
-	t("0.6.0-1.18.x", opLT, "0.9.beta-1.18.x"),
-	t("36893488147419103232", opLT, "36893488147419103233"),
-	t("1.0", opLT, "1.1"),
-	t("1.0", opLT, "1.0.1"),
-	t("10", opGT, "2"),
-}
-
-var miscTests = []testInstance{
-	// Empty strings
-	t("", opEQ, ""),
-	t("1", opGT, ""),
-	t("", opLT, "1"),
-	// Invalid UTF8
-	t("\xc3\x28", shouldError, ""),
-	t("", shouldError, "\xc3\x28"),
-	// Check boundary between textual and prerelease
-	t("a-a", opLT, "a"),
-	// Check boundary between textual and appendix
-	t("a+a", opEQ, "a"),
-	// Dash is included in prerelease comparison (if stripped it will be a smaller component)
-	// Note that a-a < a=a regardless since the prerelease splits the component creating a smaller first component; 0 is added to force splitting regardless
-	t("a0-a", opLT, "a0=a"),
-	// Pre-releases must contain only non-digit
-	t("1.16.5-10", opGT, "1.16.5"),
-	// Pre-releases can have multiple dashes (should not be split)
-	// Reasoning for test data: "p-a!" > "p-a-" (correct); "p-a!" < "p-a t-" (what happens if every dash creates a new component)
-	t("-a-", opGT, "-a!"),
-}
-
-var allTests = append(append([]testInstance{}, specTests...), miscTests...)
-
-func TestCompare(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			if v.op == shouldError {
-				// Catch panic
-				defer func() { _ = recover() }()
-			}
-
-			res := Compare(v.a, v.b)
-			if (v.op == opLT && res >= 0) ||
-				(v.op == opEQ && res != 0) ||
-				(v.op == opGT && res <= 0) ||
-				(v.op == shouldError) {
-				t.Fatalf("Unexpected result %v", res)
-			}
-		})
-	}
-}
-
-func TestLess(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			if v.op == shouldError {
-				// Catch panic
-				defer func() { _ = recover() }()
-			}
-
-			res := Less(v.a, v.b)
-			if (v.op == opLT && res == false) ||
-				(v.op == opEQ && res == true) ||
-				(v.op == opGT && res == true) ||
-				(v.op == shouldError) {
-				t.Fatalf("Unexpected result %v", res)
-			}
-		})
-	}
-}
-
-func TestEqual(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			if v.op == shouldError {
-				// Catch panic
-				defer func() { _ = recover() }()
-			}
-
-			res := Equal(v.a, v.b)
-			if (v.op == opLT && res == true) ||
-				(v.op == opEQ && res == false) ||
-				(v.op == opGT && res == true) ||
-				(v.op == shouldError) {
-				t.Fatalf("Unexpected result %v", res)
-			}
-		})
-	}
-}
-
-func TestCompareError(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			res, err := CompareError(v.a, v.b)
-			if err == nil {
-				if (v.op == opLT && res >= 0) ||
-					(v.op == opEQ && res != 0) ||
-					(v.op == opGT && res <= 0) ||
-					(v.op == shouldError) {
-					t.Fatalf("Unexpected result %v", res)
-				}
-			} else if v.op != shouldError {
-				t.Fatalf("Unexpected error %v", err)
-			}
-		})
-	}
-}
-
-func TestLessError(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			res, err := LessError(v.a, v.b)
-			if err == nil {
-				if (v.op == opLT && res == false) ||
-					(v.op == opEQ && res == true) ||
-					(v.op == opGT && res == true) ||
-					(v.op == shouldError) {
-					t.Fatalf("Unexpected result %v", res)
-				}
-			} else if v.op != shouldError {
-				t.Fatalf("Unexpected error %v", err)
-			}
-		})
-	}
-}
-
-func TestEqualError(t *testing.T) {
-	for _, v := range allTests {
-		t.Run(v.name(), func(t *testing.T) {
-			res, err := EqualError(v.a, v.b)
-			if err == nil {
-				if (v.op == opLT && res == true) ||
-					(v.op == opEQ && res == false) ||
-					(v.op == opGT && res == true) ||
-					(v.op == shouldError) {
-					t.Fatalf("Unexpected result %v", res)
-				}
-			} else if v.op != shouldError {
-				t.Fatalf("Unexpected error %v", err)
-			}
-		})
 	}
 }
 

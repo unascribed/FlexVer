@@ -161,67 +161,78 @@ impl Ord for FlexVer<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+    use std::fs;
+
     use super::*;
 
-    fn test(left: &str, right: &str, result: Ordering) {
-        assert_eq!(compare(&left, &right), result);
-        assert_eq!(
-            compare(&right, &left),
-            match result {
-                Less => Greater,
-                Greater => Less,
-                Equal => Equal,
-            }
-        );
+    const ENABLED_TESTS: &'static [&str] = &[ "test_vectors.txt" ];
+
+    fn test(left: &str, right: &str, expected: Ordering) -> Result<(), String> {
+        if compare(left, right) != expected {
+            return Err(format!("Expected {:?} but found {:?}", expected, compare(left, right)));
+        }
+
+        // Assert commutativity, if right > left than left < right and vice versa  
+        let inverse = match expected {
+            Less => Greater,
+            Greater => Less,
+            Equal => Equal,
+        };
+        if compare(right, left) != inverse {
+            return Err(format!("Comparison method violates its general contract!"));
+        }
+
+        Ok(())
     }
 
     #[test]
-    fn test_compare() {
-        test("b1.7.3", "a1.2.6", Greater);
-        test("b1.2.6", "a1.7.3", Greater);
-        test("a1.1.2", "a1.1.2_01", Less);
-        test("1.16.5-0.00.5", "1.14.2-1.3.7", Greater);
-        test("1.0.0", "1.0.0-2", Less);
-        test("1.0.0", "1.0.0_01", Less);
-        test("1.0.1", "1.0.0_01", Greater);
-        test("1.0.0_01", "1.0.1", Less);
-        test("0.17.1-beta.1", "0.17.1", Less);
-        test("0.17.1-beta.1", "0.17.1-beta.2", Less);
-        test("1.4.5_01", "1.4.5_01+fabric-1.17", Equal);
-        test("1.4.5_01", "1.4.5_01+fabric-1.17+ohno", Equal);
-        test("14w16a", "18w40b", Less);
-        test("18w40a", "18w40b", Less);
-        test("1.4.5_01+fabric-1.17", "18w40b", Less);
-        test("13w02a", "c0.3.0_01", Less);
-        test("0.6.0-1.18.x", "0.9.beta-1.18.x", Less);
+    fn standardized_tests() {
+        let test_folder = PathBuf::from("../test");
+        let errors = ENABLED_TESTS.iter().flat_map(|test_file_name| {
+            let test_file = test_folder.join(test_file_name);
+            fs::read_to_string(test_file).unwrap()
+                .lines()
+                .enumerate()
+                .filter(|(_, line)| !line.starts_with("#"))
+                .filter(|(_, line)| !line.is_empty())
+                .map(|(num, line)| {
+                    let split: Vec<&str> = line.split(" ").collect();
+                    if split.len() != 3 { panic!("{}:{} Line formatted incorrectly, expected 2 spaces: {}", test_file_name, num, line) }
+                    let ord = match split[1] {
+                        "<" => Less,
+                        "=" => Equal,
+                        ">" => Greater,
+                        _ => panic!("{} is not a valid ordering", split[1])
+                    };
+                    test(split[0], split[2], ord).map_err(|message| (line.to_owned(), message))
+                }).collect::<Vec<_>>()
+            })
+            .filter_map(|res| res.err())
+            .collect::<Vec<_>>();
+        
+        if !errors.is_empty() {
+            errors.iter().for_each(|(line, message)| println!("{}: {}", line, message));
+            panic!()
+        }
     }
 
     #[test]
-    fn test_ord() {
-        assert!(FlexVer("b1.7.3") > FlexVer("a1.2.6"));
-        assert!(FlexVer("b1.2.6") > FlexVer("a1.7.3"));
-        assert!(FlexVer("a1.1.2") < FlexVer("a1.1.2_01"));
-        assert!(FlexVer("1.16.5-0.00.5") > FlexVer("1.14.2-1.3.7"));
-        assert!(FlexVer("1.0.0") < FlexVer("1.0.0-2"));
-        assert!(FlexVer("1.0.0") < FlexVer("1.0.0_01"));
-        assert!(FlexVer("1.0.1") > FlexVer("1.0.0_01"));
-        assert!(FlexVer("1.0.0_01") < FlexVer("1.0.1"));
-        assert!(FlexVer("0.17.1-beta.1") < FlexVer("0.17.1"));
-        assert!(FlexVer("0.17.1-beta.1") < FlexVer("0.17.1-beta.2"));
-        assert!(FlexVer("1.4.5_01") == FlexVer("1.4.5_01+fabric-1.17"));
-        assert!(FlexVer("1.4.5_01") == FlexVer("1.4.5_01+fabric-1.17+ohno"));
-        assert!(FlexVer("14w16a") < FlexVer("18w40b"));
-        assert!(FlexVer("18w40a") < FlexVer("18w40b"));
-        assert!(FlexVer("1.4.5_01+fabric-1.17") < FlexVer("18w40b"));
-        assert!(FlexVer("13w02a") < FlexVer("c0.3.0_01"));
-        assert!(FlexVer("0.6.0-1.18.x") < FlexVer("0.9.beta-1.18.x"));
-
-        assert_eq!(FlexVer("b1.7.3"), FlexVer("b1.7.3").max(FlexVer("a1.2.6")));
-        assert_eq!(FlexVer("b1.2.6"), FlexVer("b1.2.6").max(FlexVer("a1.7.3")));
+    fn test_min() {
+        assert_eq!(FlexVer("1.0.0"), FlexVer("1.0.0").min(FlexVer("1.0.0")));
         assert_eq!(FlexVer("a1.2.6"), FlexVer("b1.7.3").min(FlexVer("a1.2.6")));
         assert_eq!(FlexVer("a1.7.3"), FlexVer("b1.2.6").min(FlexVer("a1.7.3")));
+    }
+
+    #[test]
+    fn test_max() {
+        assert_eq!(FlexVer("b1.7.3"), FlexVer("b1.7.3").max(FlexVer("a1.2.6")));
+        assert_eq!(FlexVer("b1.2.6"), FlexVer("b1.2.6").max(FlexVer("a1.7.3")));
         assert_eq!(FlexVer("1.0.0"), FlexVer("1.0.0").max(FlexVer("1.0.0")));
-        assert_eq!(FlexVer("1.0.0"), FlexVer("1.0.0").min(FlexVer("1.0.0")));
+    }
+
+    #[test]
+    fn test_clamp() {
         assert_eq!(
             FlexVer("1.1.0"),
             FlexVer("1.1.0").clamp(FlexVer("1.0.0"), FlexVer("1.2.0"))

@@ -82,7 +82,7 @@ out (r; isValid(r))
 			current.s ~= codePoint;
 			pre = false;
 			continue;
-		} 
+		}
 
 		final switch (current.type)
 		{
@@ -149,7 +149,9 @@ out (r; isValid(r))
 			assert(false);
 		}
 	}
-	if (pre) {
+
+	if (pre)
+	{
 		current.s ~= "-";
 	}
 
@@ -432,34 +434,37 @@ version (unittest)
 	}
 }
 
-unittest
+@system unittest
 {
-	import std.algorithm.searching: startsWith;
-	import std.array: split;
-	import std.file: read;
-	string[] lines = (cast(string) read("../test/test_vectors.txt")).split('\n');
-	int[char] ops =
+	immutable int[char] ops =
 	[
 		'<': -1,
 		'=': 0,
 		'>': 1
 	];
-	foreach (string line; lines)
+
+	import std.stdio: File;
+	auto f = File("../test/test_vectors.txt", "r");
+
+	foreach (string line; f.byLineCopy)
 	{
+		import std.algorithm.searching: startsWith;
 		if (line.startsWith("#") || line.length < 3)
 		{
 			continue;
 		}
 
-		string[] parts = line.split(" ");
+		import std.array: split;
+		immutable string[] parts = line.split(" ");
 
 		if (parts.length != 3)
 		{
 			continue;
 		}
 
-		int op = ops[parts[1][0]];
-
+		immutable int op = ops[parts[1][0]];
 		test(parts[0], parts[2], op);
 	}
+
+	f.close;
 }

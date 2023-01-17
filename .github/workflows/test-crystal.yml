@@ -1,0 +1,17 @@
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 'crystal/**'
+  pull_request:
+    paths:
+    - 'crystal/**'
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: crystal-lang/install-crystal@v1
+    - run: cd crystal && crystal spec

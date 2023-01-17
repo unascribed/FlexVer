@@ -188,19 +188,25 @@ impl Ord for FlexVer<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
     use std::fs;
+    use std::path::PathBuf;
 
     use super::*;
 
-    const ENABLED_TESTS: &'static [&str] = &[ "test_vectors.txt" ];
+    const ENABLED_TESTS: &'static [&str] = &["test_vectors.txt"];
 
     fn test(left: &str, right: &str, expected: Ordering) -> Result<(), String> {
         if compare(left, right) != expected {
-            return Err(format!("Expected {:?} but found {:?}", expected, compare(left, right)));
+            return Err(format!(
+                "Expected {:?} but found {:?} ({:?} | {:?})",
+                expected,
+                compare(left, right),
+                decompose(left),
+                decompose(right)
+            ));
         }
 
-        // Assert commutativity, if right > left than left < right and vice versa  
+        // Assert commutativity, if right > left than left < right and vice versa
         let inverse = match expected {
             Less => Greater,
             Greater => Less,
@@ -216,30 +222,41 @@ mod tests {
     #[test]
     fn standardized_tests() {
         let test_folder = PathBuf::from("../test");
-        let errors = ENABLED_TESTS.iter().flat_map(|test_file_name| {
-            let test_file = test_folder.join(test_file_name);
-            fs::read_to_string(test_file).unwrap()
-                .lines()
-                .enumerate()
-                .filter(|(_, line)| !line.starts_with("#"))
-                .filter(|(_, line)| !line.is_empty())
-                .map(|(num, line)| {
-                    let split: Vec<&str> = line.split(" ").collect();
-                    if split.len() != 3 { panic!("{}:{} Line formatted incorrectly, expected 2 spaces: {}", test_file_name, num, line) }
-                    let ord = match split[1] {
-                        "<" => Less,
-                        "=" => Equal,
-                        ">" => Greater,
-                        _ => panic!("{} is not a valid ordering", split[1])
-                    };
-                    test(split[0], split[2], ord).map_err(|message| (line.to_owned(), message))
-                }).collect::<Vec<_>>()
+        let errors = ENABLED_TESTS
+            .iter()
+            .flat_map(|test_file_name| {
+                let test_file = test_folder.join(test_file_name);
+                fs::read_to_string(test_file)
+                    .unwrap()
+                    .lines()
+                    .enumerate()
+                    .filter(|(_, line)| !line.starts_with("#"))
+                    .filter(|(_, line)| !line.is_empty())
+                    .map(|(num, line)| {
+                        let split: Vec<&str> = line.split(" ").collect();
+                        if split.len() != 3 {
+                            panic!(
+                                "{}:{} Line formatted incorrectly, expected 2 spaces: {}",
+                                test_file_name, num, line
+                            )
+                        }
+                        let ord = match split[1] {
+                            "<" => Less,
+                            "=" => Equal,
+                            ">" => Greater,
+                            _ => panic!("{} is not a valid ordering", split[1]),
+                        };
+                        test(split[0], split[2], ord).map_err(|message| (line.to_owned(), message))
+                    })
+                    .collect::<Vec<_>>()
             })
             .filter_map(|res| res.err())
             .collect::<Vec<_>>();
-        
+
         if !errors.is_empty() {
-            errors.iter().for_each(|(line, message)| println!("{}: {}", line, message));
+            errors
+                .iter()
+                .for_each(|(line, message)| println!("{}: {}", line, message));
             panic!()
         }
     }

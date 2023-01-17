@@ -1,0 +1,19 @@
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 'go/**'
+  pull_request:
+    paths:
+    - 'go/**'
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: stable
+    - run: cd go/flexver && go test

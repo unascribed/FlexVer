@@ -1,0 +1,19 @@
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 'd/**'
+  pull_request:
+    paths:
+    - 'd/**'
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dlang-community/setup-dlang@v1
+      with:
+        compiler: dmd-latest
+    - run: cd d && dub test

@@ -44,6 +44,11 @@ out (r; isValid(r))
 	Component[] result;
 	Component current;
 
+	if (rhs.length == 0)
+	{
+		return result;
+	}
+
 	if (rhs[0].isDigit)
 	{
 		current.type = ComponentType.Numeric;
@@ -60,17 +65,33 @@ out (r; isValid(r))
 		}
 	}
 
+	bool pre = false;
+
 	foreach (codePoint; rhs.byCodePoint)
 	{
 		if (codePoint == '+')
 		{
-			result ~= current;
-			return result;
+			break;
 		}
+		else if (pre)
+		{
+			result ~= current;
+			current = Component.init;
+			current.type = ComponentType.PreRelease;
+			current.s ~= "-";
+			current.s ~= codePoint;
+			pre = false;
+			continue;
+		} 
 
 		final switch (current.type)
 		{
 		case ComponentType.Textual:
+			if (codePoint == '-')
+			{
+				pre = true;
+				continue;
+			}
 			if (!(codePoint.isDigit))
 			{
 				current.s ~= codePoint;
@@ -127,6 +148,9 @@ out (r; isValid(r))
 		case ComponentType.None:
 			assert(false);
 		}
+	}
+	if (pre) {
+		current.s ~= "-";
 	}
 
 	result ~= current;
@@ -272,7 +296,7 @@ private struct Component
 			return compareText(rhs);
 
 		case ComponentType.PreRelease:
-			if (rhs.type == ComponentType.PreRelease)
+			if (rhs.type != ComponentType.None)
 			{
 				return compareText(rhs);
 			}
@@ -358,12 +382,12 @@ private struct Component
 
 private bool isAppendix(in string s) @nogc nothrow pure @safe
 {
-	return s[0] == '+';
+	return (s.length > 0 && s[0] == '+');
 }
 
 private bool isPreRelease(in string s) @nogc nothrow pure @safe
 {
-	return (s[0] == '-' && s.length > 1);
+	return (s.length > 1 && s[0] == '-');
 }
 
 private enum ComponentType
@@ -408,30 +432,34 @@ version (unittest)
 	}
 }
 
-pure @safe unittest
+unittest
 {
-	//copied wholesale from the java implementation
-	test("b1.7.3", "a1.2.6", 1);
-	test("b1.2.6", "a1.7.3", 1);
-	test("a1.1.2", "a1.1.2_01", -1);
-	test("1.16.5-0.00.5", "1.14.2-1.3.7", 1);
-	test("1.0.0", "1.0.0_01", -1);
-	test("1.0.1", "1.0.0_01", 1);
-	test("1.0.0_01", "1.0.1", -1);
-	test("0.17.1-beta.1", "0.17.1", -1);
-	test("0.17.1-beta.1", "0.17.1-beta.2", -1);
-	test("1.4.5_01", "1.4.5_01+fabric-1.17", 0);
-	test("1.4.5_01", "1.4.5_01+fabric-1.17+ohgod", 0);
-	test("14w16a", "18w40b", -1);
-	test("18w40a", "18w40b", -1);
-	test("1.4.5_01+fabric-1.17", "18w40b", -1);
-	test("13w02a", "c0.3.0_01", -1);
-	test("0.6.0-1.18.x", "0.9.beta-1.18.x", -1);
-	// 2^65. Too large for a 64-bit integer or a double
-	test("36893488147419103232", "36893488147419103233", -1);
-	test("37", "12", 1);
-	test("12", "13", -1);
-	test("12", "21", -1);
-	test("43", "103", -1);
-	test("1.0", "1.1", -1);
+	import std.algorithm.searching: startsWith;
+	import std.array: split;
+	import std.file: read;
+	string[] lines = (cast(string) read("../test/test_vectors.txt")).split('\n');
+	int[char] ops =
+	[
+		'<': -1,
+		'=': 0,
+		'>': 1
+	];
+	foreach (string line; lines)
+	{
+		if (line.startsWith("#") || line.length < 3)
+		{
+			continue;
+		}
+
+		string[] parts = line.split(" ");
+
+		if (parts.length != 3)
+		{
+			continue;
+		}
+
+		int op = ops[parts[1][0]];
+
+		test(parts[0], parts[2], op);
+	}
 }

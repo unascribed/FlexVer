@@ -35,7 +35,7 @@ public class FlexVerComparator {
 	public static int Compare(string a, string b) {
 		List<VersionComponent> ad = Decompose(a);
 		List<VersionComponent> bd = Decompose(b);
-        int highestCount = Math.Max(ad.Count, bd.Count);
+		int highestCount = Math.Max(ad.Count, bd.Count);
 		for (int i = 0; i < highestCount; i++) {
 			int c = Get(ad, i).CompareTo(Get(bd, i));
 			if (c != 0) return c;
@@ -43,31 +43,31 @@ public class FlexVerComparator {
 		return 0;
 	}
 
-    private static readonly VersionComponent Null = NullVersionComponent.Instance;
+	private static readonly VersionComponent Null = NullVersionComponent.Instance;
 
-    internal class NullVersionComponent : VersionComponent
-    {
-        public static NullVersionComponent Instance { get; } = new();
+	internal class NullVersionComponent : VersionComponent
+	{
+		public static NullVersionComponent Instance { get; } = new();
 
-        public override int CompareTo(VersionComponent other)
-        => ReferenceEquals(other, Null) ? 0 : -other.CompareTo(this);
+		public override int CompareTo(VersionComponent other)
+		=> ReferenceEquals(other, Null) ? 0 : -other.CompareTo(this);
 
-        private NullVersionComponent() : base(Array.Empty<int>())
-        { }
-    }
+		private NullVersionComponent() : base(Array.Empty<int>())
+		{ }
+	}
 
-    internal class VersionComponent
-    {
-        public int[] Codepoints { get; }
+	internal class VersionComponent
+	{
+		public int[] Codepoints { get; }
 
 		public VersionComponent(int[] codepoints)
-        {
+		{
 			Codepoints = codepoints;
 		}
 
-        public virtual int CompareTo(VersionComponent that)
-        {
-            if (ReferenceEquals(that, Null)) return 1;
+		public virtual int CompareTo(VersionComponent that)
+		{
+			if (ReferenceEquals(that, Null)) return 1;
 
 			int[] a = this.Codepoints;
 			int[] b = that.Codepoints;
@@ -82,25 +82,25 @@ public class FlexVerComparator {
 		}
 
 		public override string ToString() => new string(Codepoints.Select(el => (char)el).ToArray());
-    }
+	}
 
 	internal sealed class SemVerPrereleaseVersionComponent : VersionComponent
-    {
+	{
 		public SemVerPrereleaseVersionComponent(int[] codepoints) : base (codepoints) { }
 
 		public override int CompareTo(VersionComponent that)
-        {
-            if (ReferenceEquals(that, Null)) return -1; // opposite order
+		{
+			if (ReferenceEquals(that, Null)) return -1; // opposite order
 			return base.CompareTo(that);
 		}
-    }
+	}
 
 	internal sealed class NumericVersionComponent : VersionComponent
-    {
+	{
 		public NumericVersionComponent(int[] codepoints) : base(codepoints) { }
 
 		public override int CompareTo(VersionComponent that) {
-            if (ReferenceEquals(that, Null)) return 1;
+			if (ReferenceEquals(that, Null)) return 1;
 			if (that is NumericVersionComponent) {
 				int[] a = RemoveLeadingZeroes(this.Codepoints);
 				int[] b = RemoveLeadingZeroes(that.Codepoints);
@@ -132,15 +132,15 @@ public class FlexVerComparator {
 	 */
 	internal static List<VersionComponent> Decompose(string str) {
 		// TODO: should this NRE, like in the java version, or treat `null` as `""`?
-        if (string.Empty == str) return new List<VersionComponent>();
+		if (string.Empty == str) return new List<VersionComponent>();
 		bool lastWasNumber = char.IsAsciiDigit(str[0]);
-        var stringInfo = new StringInfo(str);
+		var stringInfo = new StringInfo(str);
 		int totalCodepoints = stringInfo.LengthInTextElements;
 		int[] accum = new int[totalCodepoints];
 		List<VersionComponent> outComponents = new();
 		int j = 0;
 
-        for (int i = 0; i < str.Length; i++) {
+		for (int i = 0; i < str.Length; i++) {
 			char cp = str[i];
 			if (char.IsHighSurrogate(cp)) i++;
 			if (cp == '+') break; // remove appendices
@@ -153,25 +153,25 @@ public class FlexVerComparator {
 			accum[j] = cp;
 			j++;
 		}
-        outComponents.Add(CreateComponent(lastWasNumber, accum, j));
+		outComponents.Add(CreateComponent(lastWasNumber, accum, j));
 		return outComponents;
 	}
 
 	private static VersionComponent CreateComponent(bool number, int[] s, int j)
-    {
+	{
 		s = s[..j];
 
 		if (number) {
 			return new NumericVersionComponent(s);
 		}
 
-        if (s.Length > 1 && s[0] == '-') {
-            return new SemVerPrereleaseVersionComponent(s);
-        }
+		if (s.Length > 1 && s[0] == '-') {
+			return new SemVerPrereleaseVersionComponent(s);
+		}
 
-        return new VersionComponent(s);
-    }
+		return new VersionComponent(s);
+	}
 
 	private static VersionComponent Get(List<VersionComponent> li, int i)
-    => i >= li.Count ? Null : li[i];
+	=> i >= li.Count ? Null : li[i];
 }

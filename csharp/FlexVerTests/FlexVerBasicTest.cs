@@ -11,8 +11,8 @@ public class Tests
 	[TestCaseSource(nameof(GetEqualityTests))]
 	public void TestEquality(string a, string b, Ordering expectedOrdering)
 	{
-		Ordering c = OrderingExtensions.FromComparison(FlexVerComparator.Compare(a, b));
-		Ordering c2 = OrderingExtensions.FromComparison(FlexVerComparator.Compare(b, a));
+		Ordering c = OrderingExtensions.FromComparison(FlexVerComparer.Compare(a, b));
+		Ordering c2 = OrderingExtensions.FromComparison(FlexVerComparer.Compare(b, a));
 
 		Assert.That(c, Is.EqualTo(c2.Invert()), $"Comparison method violates its general contract! ({a} <=> {b} is not commutative)");
 		Assert.That(c, Is.EqualTo(expectedOrdering), $"OrderingExtensions.FromComparison produced {a} {c} {b}");

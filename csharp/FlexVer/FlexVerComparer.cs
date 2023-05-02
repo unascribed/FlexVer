@@ -23,7 +23,7 @@ namespace FlexVer;
  * but best effort is made to correct for basic structural changes, and versions of differing length
  * will be parsed in a logical fashion.
  */
-public class FlexVerComparator {
+public class FlexVerComparer {
 
 
 	/// <summary>

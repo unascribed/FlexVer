@@ -115,7 +115,7 @@ public class FlexVerComparator {
 			return base.CompareTo(that);
 		}
 
-		private int[] RemoveLeadingZeroes(int[] a) {
+		private static int[] RemoveLeadingZeroes(int[] a) {
 			if (a.Length == 1) return a;
 			int i = 0;
 			while (i < a.Length && a[i] == '0') {
@@ -157,19 +157,21 @@ public class FlexVerComparator {
 		return outComponents;
 	}
 
-	private static VersionComponent CreateComponent(bool number, int[] s, int j) {
+	private static VersionComponent CreateComponent(bool number, int[] s, int j)
+    {
 		s = s[..j];
+
 		if (number) {
 			return new NumericVersionComponent(s);
-		} else if (s.Length > 1 && s[0] == '-') {
-			return new SemVerPrereleaseVersionComponent(s);
-		} else {
-			return new VersionComponent(s);
 		}
-	}
 
-	private static VersionComponent Get(List<VersionComponent> li, int i) {
-		return i >= li.Count ? Null : li[i];
-	}
+        if (s.Length > 1 && s[0] == '-') {
+            return new SemVerPrereleaseVersionComponent(s);
+        }
 
+        return new VersionComponent(s);
+    }
+
+	private static VersionComponent Get(List<VersionComponent> li, int i)
+    => i >= li.Count ? Null : li[i];
 }

@@ -23,12 +23,13 @@ namespace FlexVer;
  * but best effort is made to correct for basic structural changes, and versions of differing length
  * will be parsed in a logical fashion.
  */
-public sealed class FlexVerComparer
+public static class FlexVerComparer
 {
 	public static IComparer<string> Default { get; } = new FlexVerComparerImpl();
 
 	private sealed class FlexVerComparerImpl : IComparer<string>
 	{
+		// ReSharper disable once MemberHidesStaticFromOuterClass
 		public int Compare(string? x, string? y)
 		{
 			if (x is null) return y is null ? 0 : -1;

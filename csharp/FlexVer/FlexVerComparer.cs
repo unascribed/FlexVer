@@ -14,7 +14,6 @@ using System.Runtime.CompilerServices;
 
 namespace FlexVer;
 
-
 /**
  * Implements FlexVer, a SemVer-compatible intuitive comparator for free-form versioning strings as
  * seen in the wild. It's designed to sort versions like people do, rather than attempting to force
@@ -114,7 +113,8 @@ public static class FlexVerComparer
 	{
 		public NumericVersionComponent(int[] codepoints) : base(codepoints) { }
 
-		public override int CompareTo(VersionComponent that) {
+		public override int CompareTo(VersionComponent that)
+		{
 			if (ReferenceEquals(that, Null)) return 1;
 			if (that is NumericVersionComponent) {
 				int[] a = RemoveLeadingZeroes(this.Codepoints);
@@ -130,7 +130,8 @@ public static class FlexVerComparer
 			return base.CompareTo(that);
 		}
 
-		private static int[] RemoveLeadingZeroes(int[] a) {
+		private static int[] RemoveLeadingZeroes(int[] a)
+		{
 			if (a.Length == 1) return a;
 			int i = 0;
 			while (i < a.Length && a[i] == '0') {
@@ -145,7 +146,8 @@ public static class FlexVerComparer
 	 * Break apart a string into intuitive version components, by splitting it where a run of
 	 * characters changes from numeric to non-numeric.
 	 */
-	internal static List<VersionComponent> Decompose(string str) {
+	internal static List<VersionComponent> Decompose(string str)
+	{
 		if (string.Empty == str) return new List<VersionComponent>();
 		bool lastWasNumber = char.IsAsciiDigit(str[0]);
 		var stringInfo = new StringInfo(str);

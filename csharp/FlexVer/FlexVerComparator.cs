@@ -35,13 +35,13 @@ public class FlexVerComparator {
 	public static int Compare(string a, string b) {
 		List<VersionComponent> ad = Decompose(a);
 		List<VersionComponent> bd = Decompose(b);
-		for (int i = 0; i < Math.Max(ad.Count, bd.Count); i++) {
+        int highestCount = Math.Max(ad.Count, bd.Count);
+		for (int i = 0; i < highestCount; i++) {
 			int c = Get(ad, i).CompareTo(Get(bd, i));
 			if (c != 0) return c;
 		}
 		return 0;
 	}
-
 
     private static readonly VersionComponent Null = NullVersionComponent.Instance;
 
@@ -49,14 +49,14 @@ public class FlexVerComparator {
     {
         public static NullVersionComponent Instance { get; } = new();
 
-        public override int CompareTo(VersionComponent? other)
-        => other == Null || other is null ? 0 : -other.CompareTo(this);
+        public override int CompareTo(VersionComponent other)
+        => ReferenceEquals(other, Null) ? 0 : -other.CompareTo(this);
 
         private NullVersionComponent() : base(Array.Empty<int>())
         { }
     }
 
-    internal class VersionComponent : IComparable<VersionComponent>
+    internal class VersionComponent
     {
         public int[] Codepoints { get; }
 
@@ -65,9 +65,9 @@ public class FlexVerComparator {
 			Codepoints = codepoints;
 		}
 
-        public virtual int CompareTo(VersionComponent? that)
+        public virtual int CompareTo(VersionComponent that)
         {
-            if (that is null || ReferenceEquals(that, Null)) return 1;
+            if (ReferenceEquals(that, Null)) return 1;
 
 			int[] a = this.Codepoints;
 			int[] b = that.Codepoints;
@@ -88,9 +88,9 @@ public class FlexVerComparator {
     {
 		public SemVerPrereleaseVersionComponent(int[] codepoints) : base (codepoints) { }
 
-		public override int CompareTo(VersionComponent? that)
+		public override int CompareTo(VersionComponent that)
         {
-			if (that == Null) return -1; // opposite order
+            if (ReferenceEquals(that, Null)) return -1; // opposite order
 			return base.CompareTo(that);
 		}
     }
@@ -99,8 +99,8 @@ public class FlexVerComparator {
     {
 		public NumericVersionComponent(int[] codepoints) : base(codepoints) { }
 
-		public override int CompareTo(VersionComponent? that) {
-			if (that is null || that == Null) return 1;
+		public override int CompareTo(VersionComponent that) {
+            if (ReferenceEquals(that, Null)) return 1;
 			if (that is NumericVersionComponent) {
 				int[] a = RemoveLeadingZeroes(this.Codepoints);
 				int[] b = RemoveLeadingZeroes(that.Codepoints);

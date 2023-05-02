@@ -23,8 +23,19 @@ namespace FlexVer;
  * but best effort is made to correct for basic structural changes, and versions of differing length
  * will be parsed in a logical fashion.
  */
-public class FlexVerComparer {
+public sealed class FlexVerComparer
+{
+	public static IComparer<string> Default { get; } = new FlexVerComparerImpl();
 
+	private sealed class FlexVerComparerImpl : IComparer<string>
+	{
+		public int Compare(string? x, string? y)
+		{
+			if (x is null) return y is null ? 0 : -1;
+			if (y is null) return 1;
+			return FlexVerComparer.Compare(x, y);
+		}
+	}
 
 	/// <summary>
 	/// Parse the given strings as freeform version strings, and compare them according to FlexVer.

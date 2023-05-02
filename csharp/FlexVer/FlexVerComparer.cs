@@ -43,7 +43,10 @@ public sealed class FlexVerComparer
 	/// <param name="a">the first version string</param>
 	/// <param name="b">the second version string</param>
 	/// <returns><c>0</c> if the two versions are equal, a negative number if <c>a &lt; b</c>, or a positive number if <c>a &gt; b</c></returns>
-	public static int Compare(string a, string b) {
+	public static int Compare(string a, string b)
+	{
+		if (a is null) throw new ArgumentNullException(nameof(a));
+		if (b is null) throw new ArgumentNullException(nameof(b));
 		List<VersionComponent> ad = Decompose(a);
 		List<VersionComponent> bd = Decompose(b);
 		int highestCount = Math.Max(ad.Count, bd.Count);
@@ -142,7 +145,6 @@ public sealed class FlexVerComparer
 	 * characters changes from numeric to non-numeric.
 	 */
 	internal static List<VersionComponent> Decompose(string str) {
-		// TODO: should this NRE, like in the java version, or treat `null` as `""`?
 		if (string.Empty == str) return new List<VersionComponent>();
 		bool lastWasNumber = char.IsAsciiDigit(str[0]);
 		var stringInfo = new StringInfo(str);

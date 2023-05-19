@@ -117,8 +117,8 @@ public static class FlexVerComparer
 		{
 			if (ReferenceEquals(that, Null)) return 1;
 			if (that is NumericVersionComponent) {
-				int[] a = RemoveLeadingZeroes(this.Codepoints);
-				int[] b = RemoveLeadingZeroes(that.Codepoints);
+				ReadOnlySpan<int> a = RemoveLeadingZeroes(this.Codepoints);
+				ReadOnlySpan<int> b = RemoveLeadingZeroes(that.Codepoints);
 				if (a.Length != b.Length) return a.Length-b.Length;
 				for (int i = 0; i < a.Length; i++) {
 					int ad = a[i];
@@ -130,7 +130,7 @@ public static class FlexVerComparer
 			return base.CompareTo(that);
 		}
 
-		private static int[] RemoveLeadingZeroes(int[] a)
+		private static ReadOnlySpan<int> RemoveLeadingZeroes(ReadOnlySpan<int> a)
 		{
 			if (a.Length == 1) return a;
 			int i = 0;

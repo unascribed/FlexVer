@@ -2,14 +2,16 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" />
+        <PackageReference Include="BenchmarkDotNet" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FlexVer\FlexVer.csproj" />
+        <ProjectReference Include="..\FlexVer\FlexVer.csproj" />
     </ItemGroup>
 
 </Project>

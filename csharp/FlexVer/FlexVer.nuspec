@@ -3,7 +3,7 @@
     <metadata>
         <!-- Required elements-->
         <id>FlexVer</id>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <description>
             A SemVer-compatible intuitive comparator for free-form versioning
             strings as seen in the wild, designed to sort versions like people

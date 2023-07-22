@@ -7,8 +7,9 @@
  * See <http://creativecommons.org/publicdomain/zero/1.0/>
  */
 
-using System.Globalization;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 [assembly:InternalsVisibleTo("FlexVerTests")]
 
@@ -24,6 +25,9 @@ namespace FlexVer;
  */
 public static class FlexVerComparer
 {
+	private const char AppendixStartCh = '+';
+	private const char PreReleaseStartCh = '-';
+
 	public static IComparer<string> Default { get; } = new FlexVerComparerImpl();
 
 	private sealed class FlexVerComparerImpl : IComparer<string>
@@ -47,44 +51,69 @@ public static class FlexVerComparer
 	{
 		if (a is null) throw new ArgumentNullException(nameof(a));
 		if (b is null) throw new ArgumentNullException(nameof(b));
-		List<VersionComponent> ad = Decompose(a);
-		List<VersionComponent> bd = Decompose(b);
-		int highestCount = Math.Max(ad.Count, bd.Count);
-		for (int i = 0; i < highestCount; i++) {
-			int c = Get(ad, i).CompareTo(Get(bd, i));
+
+		var offsetA = 0;
+		var offSetB = 0;
+		Span<ushort> codepointsA = stackalloc ushort[32]; // 32 arbitrarily chosen
+		Span<ushort> codepointsB = stackalloc ushort[32];
+		bool aHitAppendix = false;
+		bool bHitAppendix = false;
+		while (true) {
+			var ac = GetNextVersionComponent(a, ref offsetA, ref aHitAppendix, codepointsA);
+			var bc = GetNextVersionComponent(b, ref offSetB, ref bHitAppendix, codepointsB);
+
+			if (ac.ComponentType is VersionComponentType.Null && bc.ComponentType is VersionComponentType.Null) {
+				return 0;
+			}
+
+			int c = VersionComponent.CompareTo(ac, bc);
 			if (c != 0) return c;
+			codepointsA.Clear();
+			codepointsB.Clear();
 		}
-		return 0;
 	}
 
-	private static readonly VersionComponent Null = NullVersionComponent.Instance;
-
-	internal class NullVersionComponent : VersionComponent
+	internal enum VersionComponentType
 	{
-		public static NullVersionComponent Instance { get; } = new();
-
-		public override int CompareTo(VersionComponent other)
-		=> ReferenceEquals(other, Null) ? 0 : -other.CompareTo(this);
-
-		private NullVersionComponent() : base(Array.Empty<int>())
-		{ }
+		Default,
+		SemVerPrerelease,
+		Numeric,
+		Null,
 	}
 
-	internal class VersionComponent
+	[DebuggerDisplay("{ComponentType} | '{this.ToString()}'")]
+	internal ref struct VersionComponent
 	{
-		public int[] Codepoints { get; }
+		public ReadOnlySpan<ushort> Codepoints { get; }
+		public VersionComponentType ComponentType { get; }
 
-		public VersionComponent(int[] codepoints)
+		public VersionComponent(ReadOnlySpan<ushort> codepoints, VersionComponentType componentType)
 		{
 			Codepoints = codepoints;
+			ComponentType = componentType;
 		}
 
-		public virtual int CompareTo(VersionComponent that)
+		public static int CompareTo(VersionComponent cur, VersionComponent other)
 		{
-			if (ReferenceEquals(that, Null)) return 1;
+#pragma warning disable CS8524
+			return cur.ComponentType switch
+#pragma warning restore CS8524
+			{
+				VersionComponentType.Default => CompareToBase(cur, other),
+				VersionComponentType.Null when other.ComponentType == VersionComponentType.Null => 0,
+				VersionComponentType.Null when other.ComponentType == VersionComponentType.SemVerPrerelease => 1,
+				VersionComponentType.Null => -CompareToBase(other, cur),
+				VersionComponentType.Numeric => CompareToNumeric(cur, other),
+				VersionComponentType.SemVerPrerelease => CompareToSemVerPrerelease(cur, other)
+			};
+		}
 
-			int[] a = this.Codepoints;
-			int[] b = that.Codepoints;
+		public static int CompareToBase(VersionComponent cur, VersionComponent other)
+		{
+			if (other.ComponentType == VersionComponentType.Null) return 1;
+
+			ReadOnlySpan<ushort> a = cur.Codepoints;
+			ReadOnlySpan<ushort> b = other.Codepoints;
 
 			for (int i = 0; i < Math.Min(a.Length, b.Length); i++) {
 				int c1 = a[i];
@@ -95,30 +124,12 @@ public static class FlexVerComparer
 			return a.Length - b.Length;
 		}
 
-		public override string ToString() => new string(Codepoints.Select(el => (char)el).ToArray());
-	}
-
-	internal sealed class SemVerPrereleaseVersionComponent : VersionComponent
-	{
-		public SemVerPrereleaseVersionComponent(int[] codepoints) : base (codepoints) { }
-
-		public override int CompareTo(VersionComponent that)
+		public static int CompareToNumeric(VersionComponent cur, VersionComponent that)
 		{
-			if (ReferenceEquals(that, Null)) return -1; // opposite order
-			return base.CompareTo(that);
-		}
-	}
-
-	internal sealed class NumericVersionComponent : VersionComponent
-	{
-		public NumericVersionComponent(int[] codepoints) : base(codepoints) { }
-
-		public override int CompareTo(VersionComponent that)
-		{
-			if (ReferenceEquals(that, Null)) return 1;
-			if (that is NumericVersionComponent) {
-				ReadOnlySpan<int> a = RemoveLeadingZeroes(this.Codepoints);
-				ReadOnlySpan<int> b = RemoveLeadingZeroes(that.Codepoints);
+			if (that.ComponentType == VersionComponentType.Null) return 1;
+			if (that.ComponentType == VersionComponentType.Numeric) {
+				ReadOnlySpan<ushort> a = RemoveLeadingZeroes(cur.Codepoints);
+				ReadOnlySpan<ushort> b = RemoveLeadingZeroes(that.Codepoints);
 				if (a.Length != b.Length) return a.Length-b.Length;
 				for (int i = 0; i < a.Length; i++) {
 					int ad = a[i];
@@ -127,10 +138,16 @@ public static class FlexVerComparer
 				}
 				return 0;
 			}
-			return base.CompareTo(that);
+			return CompareToBase(cur, that);
 		}
 
-		private static ReadOnlySpan<int> RemoveLeadingZeroes(ReadOnlySpan<int> a)
+		public static int CompareToSemVerPrerelease(VersionComponent left, VersionComponent right)
+		{
+			if (right.ComponentType == VersionComponentType.Null) return -1; // opposite order
+			return CompareToBase(left, right);
+		}
+
+		private static ReadOnlySpan<ushort> RemoveLeadingZeroes(ReadOnlySpan<ushort> a)
 		{
 			if (a.Length == 1) return a;
 			int i = 0;
@@ -140,54 +157,56 @@ public static class FlexVerComparer
 			return a[i..];
 		}
 
+		public override string ToString() => new(MemoryMarshal.Cast<ushort, char>(Codepoints));
 	}
 
-	/*
-	 * Break apart a string into intuitive version components, by splitting it where a run of
-	 * characters changes from numeric to non-numeric.
-	 */
-	internal static List<VersionComponent> Decompose(string str)
+	internal static VersionComponent GetNextVersionComponent(
+		ReadOnlySpan<char> span,
+		ref int i,
+		ref bool hitAppendix,
+		Span<ushort> writableComponentCodepoints)
 	{
-		if (string.Empty == str) return new List<VersionComponent>();
-		bool lastWasNumber = char.IsAsciiDigit(str[0]);
-		var stringInfo = new StringInfo(str);
-		int totalCodepoints = stringInfo.LengthInTextElements;
-		int[] accum = new int[totalCodepoints];
-		List<VersionComponent> outComponents = new();
-		int j = 0;
+		if (span.Length == i || hitAppendix) {
+			return new VersionComponent(ReadOnlySpan<ushort>.Empty, VersionComponentType.Null);
+		}
 
-		for (int i = 0; i < str.Length; i++) {
-			char cp = str[i];
+		bool lastWasNumber = char.IsAsciiDigit(span[i]);
+
+		ValueListBuilder<ushort> builder = new ValueListBuilder<ushort>(writableComponentCodepoints);
+
+		while (i < span.Length) {
+			char cp = span[i];
 			if (char.IsHighSurrogate(cp)) i++;
-			if (cp == '+') break; // remove appendices
-			bool isNumber = char.IsAsciiDigit(cp);
-			if (isNumber != lastWasNumber || (cp == '-' && j > 0 && accum[0] != '-')) {
-				outComponents.Add(CreateComponent(lastWasNumber, accum, j));
-				j = 0;
-				lastWasNumber = isNumber;
+			if (cp == AppendixStartCh) {
+				hitAppendix = true;
+				break;
 			}
-			accum[j] = cp;
-			j++;
+
+			bool isNumber = char.IsAsciiDigit(cp);
+			if (// Ending a Number component
+				isNumber != lastWasNumber
+				// Starting a new PreRelease component
+			    || (cp == PreReleaseStartCh && builder.Length > 0 && builder[0] != PreReleaseStartCh)
+			) {
+				return CreateComponent(lastWasNumber, builder.AsSpan());
+			}
+			builder.Append(cp);
+			i++;
 		}
-		outComponents.Add(CreateComponent(lastWasNumber, accum, j));
-		return outComponents;
+		return CreateComponent(lastWasNumber, builder.AsSpan());
 	}
 
-	private static VersionComponent CreateComponent(bool number, int[] s, int j)
+	private static VersionComponent CreateComponent(bool number, ReadOnlySpan<ushort> s)
 	{
-		s = s[..j];
-
 		if (number) {
-			return new NumericVersionComponent(s);
+			return new VersionComponent(s, VersionComponentType.Numeric);
 		}
 
-		if (s.Length > 1 && s[0] == '-') {
-			return new SemVerPrereleaseVersionComponent(s);
+		if (s.Length > 1 && s[0] == PreReleaseStartCh) {
+			return new VersionComponent(s, VersionComponentType.SemVerPrerelease);
 		}
 
-		return new VersionComponent(s);
+		return new VersionComponent(s, VersionComponentType.Default);
 	}
 
-	private static VersionComponent Get(List<VersionComponent> li, int i)
-	=> i >= li.Count ? Null : li[i];
 }

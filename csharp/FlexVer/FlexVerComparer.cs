@@ -95,9 +95,7 @@ public static class FlexVerComparer
 
 		public static int CompareTo(VersionComponent cur, VersionComponent other)
 		{
-#pragma warning disable CS8524
 			return cur.ComponentType switch
-#pragma warning restore CS8524
 			{
 				VersionComponentType.Default => CompareToBase(cur, other),
 				VersionComponentType.Null when other.ComponentType == VersionComponentType.Null => 0,

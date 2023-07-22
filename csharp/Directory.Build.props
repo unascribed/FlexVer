@@ -1,0 +1,18 @@
+<Project>
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NoWarn>
+            <!-- non-exhaustive switch expression: Unnamed Enum Value (e.g. underlying type cast to enum).
+                Disabling to enable SwitchExpressionException.-->
+            CS8524,
+        </NoWarn>
+    </PropertyGroup>
+
+</Project>

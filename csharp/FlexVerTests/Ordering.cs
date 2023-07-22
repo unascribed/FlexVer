@@ -1,6 +1,5 @@
 namespace FlexVerTests;
 
-#pragma warning disable CS8524 // Exhaustive switch (e.g. underlying type cast to enum). Disabling to enable SwitchExpressionException.
 
 public enum Ordering
 {

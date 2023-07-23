@@ -26,7 +26,8 @@ function(a, b) {
 			function removeLeadingZeroes(c) {
 				if (c.length == 1) return c;
 				var i = 0;
-				while (i < c.length && digit(c[i]) == 0) {
+				let stopIdx = c.length - 1;
+				while (i < stopIdx && digit(c[i]) == 0) {
 					i++;
 				}
 				return c.slice(i);

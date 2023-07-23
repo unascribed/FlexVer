@@ -1,3 +1,5 @@
+name: Crystal
+
 on:
   workflow_dispatch:
   push:

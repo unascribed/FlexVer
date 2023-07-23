@@ -1,3 +1,5 @@
+name: JS
+
 on:
   workflow_dispatch:
   push:

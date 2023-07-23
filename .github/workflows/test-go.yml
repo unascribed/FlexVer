@@ -1,3 +1,5 @@
+name: Go
+
 on:
   workflow_dispatch:
   push:

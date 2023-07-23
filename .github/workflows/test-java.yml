@@ -1,3 +1,5 @@
+name: Java
+
 on:
   workflow_dispatch:
   push:

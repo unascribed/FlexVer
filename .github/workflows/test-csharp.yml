@@ -1,4 +1,4 @@
-name: csharp / .NET
+name: "C#"
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
       - 'test/**'
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 

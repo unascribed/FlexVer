@@ -3,9 +3,11 @@ on:
   push:
     paths:
     - 'crystal/**'
+    - 'test/**'
   pull_request:
     paths:
     - 'crystal/**'
+    - 'test/**'
 
 jobs:
   test:

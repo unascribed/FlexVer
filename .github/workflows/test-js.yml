@@ -3,9 +3,11 @@ on:
   push:
     paths:
     - 'js/**'
+    - 'test/**'
   pull_request:
     paths:
     - 'js/**'
+    - 'test/**'
 
 jobs:
   test:

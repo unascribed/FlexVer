@@ -3,9 +3,11 @@ on:
   push:
     paths:
     - 'rust/**'
+    - 'test/**'
   pull_request:
     paths:
     - 'rust/**'
+    - 'test/**'
 
 jobs:
   test:

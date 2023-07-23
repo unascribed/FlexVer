@@ -19,7 +19,7 @@ describe FlexVer do
   tests = TESTS.map { |file| parse_test(TEST_DIR / file) } .sum
 
   tests.each do |a, cmp, b|
-    it "performs sample comparasions correctly: #{a} #{cmp} #{b}" do
+    it "performs sample comparisons correctly: #{a} #{cmp} #{b}" do
       cmp_int = case cmp
                 when '>'
                   1

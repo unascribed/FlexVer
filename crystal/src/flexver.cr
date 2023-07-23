@@ -85,14 +85,16 @@ struct FlexVer
       when type == ComponentType::PreRelease && other.type == ComponentType::Null
         -1
       when type == ComponentType::Textual, type == ComponentType::PreRelease, type != other.type
-        # Textual comparasion
+        # Textual comparison
         str.chars <=> other.str.chars
       when type == ComponentType::Numeric
-        # Numeric comparasion
+        # Numeric comparison
         # Implemented as described under "Codepoint-wise"
-        if str.size != other.str.size
-          return str.size <=> other.str.size end
-        str.lstrip('0').chars <=> other.str.lstrip('0').chars
+        a = str.lstrip('0').chars
+        b = other.str.lstrip('0').chars
+        if a.size != b.size
+          return a.size <=> b.size end
+        a <=> b
       else
         raise "#{type} ? #{other.type}"
       end

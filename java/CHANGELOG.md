@@ -1,3 +1,6 @@
+# 1.1.1
+- Fixed incorrect handling of leading zeroes when compared to a single-zero component. (e.g. '00' considered != '0')
+
 # 1.1.0
 - Fixed inconsistent handling of an ambiguity in the spec related to prereleases
 

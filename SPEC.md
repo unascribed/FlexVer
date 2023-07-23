@@ -136,7 +136,7 @@ As digits may only be ASCII, `digit` can be trivially implemented by subtracting
 ```raku
 if (component.length == 1) return component
 let i = 0
-while (i < a.length && digit(a[i]) == 0):
+while (i < a.length - 1 && digit(a[i]) == 0):
 	i++
 return component.slice(i, component.length)
 ```

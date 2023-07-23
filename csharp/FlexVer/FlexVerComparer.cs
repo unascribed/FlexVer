@@ -7,7 +7,6 @@
  * See <http://creativecommons.org/publicdomain/zero/1.0/>
  */
 
-using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -151,7 +150,8 @@ public static class FlexVerComparer
 		{
 			if (a.Length == 1) return a;
 			int i = 0;
-			while (i < a.Length && a[i] == ZeroCp) {
+			int stopIdx = a.Length - 1;
+			while (i < stopIdx && a[i] == ZeroCp) {
 				i++;
 			}
 			return a[i..];

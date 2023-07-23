@@ -114,7 +114,8 @@ public class FlexVerComparator {
 		private int[] removeLeadingZeroes(int[] a) {
 			if (a.length == 1) return a;
 			int i = 0;
-			while (i < a.length && a[i] == '0') {
+			int stopIdx = a.length - 1;
+			while (i < stopIdx && a[i] == '0') {
 				i++;
 			}
 			return Arrays.copyOfRange(a, i, a.length);

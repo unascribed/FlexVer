@@ -9,7 +9,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Text;
 
 [assembly:InternalsVisibleTo("FlexVerTests")]
 
@@ -25,8 +25,9 @@ namespace FlexVer;
  */
 public static class FlexVerComparer
 {
-	private const char AppendixStartCh = '+';
-	private const char PreReleaseStartCh = '-';
+	private static readonly Rune AppendixStartCp = new('+');
+	private static readonly Rune PreReleaseStartCp = new('-');
+	private static readonly Rune ZeroCp = new('0');
 
 	public static IComparer<string> Default { get; } = new FlexVerComparerImpl();
 
@@ -54,8 +55,8 @@ public static class FlexVerComparer
 
 		var offsetA = 0;
 		var offSetB = 0;
-		Span<ushort> codepointsA = stackalloc ushort[32]; // 32 arbitrarily chosen
-		Span<ushort> codepointsB = stackalloc ushort[32];
+		Span<Rune> codepointsA = stackalloc Rune[32]; // 32 arbitrarily chosen
+		Span<Rune> codepointsB = stackalloc Rune[32];
 		bool aHitAppendix = false;
 		bool bHitAppendix = false;
 		while (true) {
@@ -84,10 +85,10 @@ public static class FlexVerComparer
 	[DebuggerDisplay("{ComponentType} | '{this.ToString()}'")]
 	internal ref struct VersionComponent
 	{
-		public ReadOnlySpan<ushort> Codepoints { get; }
+		public ReadOnlySpan<Rune> Codepoints { get; }
 		public VersionComponentType ComponentType { get; }
 
-		public VersionComponent(ReadOnlySpan<ushort> codepoints, VersionComponentType componentType)
+		public VersionComponent(ReadOnlySpan<Rune> codepoints, VersionComponentType componentType)
 		{
 			Codepoints = codepoints;
 			ComponentType = componentType;
@@ -110,13 +111,13 @@ public static class FlexVerComparer
 		{
 			if (other.ComponentType == VersionComponentType.Null) return 1;
 
-			ReadOnlySpan<ushort> a = cur.Codepoints;
-			ReadOnlySpan<ushort> b = other.Codepoints;
+			ReadOnlySpan<Rune> a = cur.Codepoints;
+			ReadOnlySpan<Rune> b = other.Codepoints;
 
 			for (int i = 0; i < Math.Min(a.Length, b.Length); i++) {
-				int c1 = a[i];
-				int c2 = b[i];
-				if (c1 != c2) return c1 - c2;
+				Rune c1 = a[i];
+				Rune c2 = b[i];
+				if (c1 != c2) return c1.Value - c2.Value;
 			}
 
 			return a.Length - b.Length;
@@ -126,13 +127,13 @@ public static class FlexVerComparer
 		{
 			if (that.ComponentType == VersionComponentType.Null) return 1;
 			if (that.ComponentType == VersionComponentType.Numeric) {
-				ReadOnlySpan<ushort> a = RemoveLeadingZeroes(cur.Codepoints);
-				ReadOnlySpan<ushort> b = RemoveLeadingZeroes(that.Codepoints);
+				ReadOnlySpan<Rune> a = RemoveLeadingZeroes(cur.Codepoints);
+				ReadOnlySpan<Rune> b = RemoveLeadingZeroes(that.Codepoints);
 				if (a.Length != b.Length) return a.Length-b.Length;
 				for (int i = 0; i < a.Length; i++) {
-					int ad = a[i];
-					int bd = b[i];
-					if (ad != bd) return ad-bd;
+					Rune ad = a[i];
+					Rune bd = b[i];
+					if (ad != bd) return ad.Value - bd.Value;
 				}
 				return 0;
 			}
@@ -145,46 +146,50 @@ public static class FlexVerComparer
 			return CompareToBase(left, right);
 		}
 
-		private static ReadOnlySpan<ushort> RemoveLeadingZeroes(ReadOnlySpan<ushort> a)
+		private static ReadOnlySpan<Rune> RemoveLeadingZeroes(ReadOnlySpan<Rune> a)
 		{
 			if (a.Length == 1) return a;
 			int i = 0;
-			while (i < a.Length && a[i] == '0') {
+			while (i < a.Length && a[i] == ZeroCp) {
 				i++;
 			}
 			return a[i..];
 		}
 
-		public override string ToString() => new(MemoryMarshal.Cast<ushort, char>(Codepoints));
+		public override string ToString() => string.Join("", Codepoints.ToArray().Select(rune => rune.ToString()));
 	}
 
 	internal static VersionComponent GetNextVersionComponent(
-		ReadOnlySpan<char> span,
+		string str,
 		ref int i,
 		ref bool hitAppendix,
-		Span<ushort> writableComponentCodepoints)
+		Span<Rune> writableComponentCodepoints)
 	{
-		if (span.Length == i || hitAppendix) {
-			return new VersionComponent(ReadOnlySpan<ushort>.Empty, VersionComponentType.Null);
+		if (str.Length == i || hitAppendix) {
+			return new VersionComponent(ReadOnlySpan<Rune>.Empty, VersionComponentType.Null);
 		}
 
-		bool lastWasNumber = char.IsAsciiDigit(span[i]);
+		bool lastWasNumber = char.IsAsciiDigit(str[i]);
 
-		ValueListBuilder<ushort> builder = new ValueListBuilder<ushort>(writableComponentCodepoints);
+		ValueListBuilder<Rune> builder = new ValueListBuilder<Rune>(writableComponentCodepoints);
 
-		while (i < span.Length) {
-			char cp = span[i];
-			if (char.IsHighSurrogate(cp)) i++;
-			if (cp == AppendixStartCh) {
+		while (i < str.Length) {
+			if (char.IsHighSurrogate(str[i])) i++;
+			if (!Rune.TryGetRuneAt(str, i, out Rune cp)) {
+				throw new FormatException("Failed to parse version to Unicode code points") {
+					Data = { ["Value"] = str, ["Index"] = i }
+				};
+			}
+			if (cp == AppendixStartCp) {
 				hitAppendix = true;
 				break;
 			}
 
-			bool isNumber = char.IsAsciiDigit(cp);
+			bool isNumber = Rune.IsDigit(cp);
 			if (// Ending a Number component
 				isNumber != lastWasNumber
 				// Starting a new PreRelease component
-			    || (cp == PreReleaseStartCh && builder.Length > 0 && builder[0] != PreReleaseStartCh)
+			    || (cp == PreReleaseStartCp && builder.Length > 0 && builder[0] != PreReleaseStartCp)
 			) {
 				return CreateComponent(lastWasNumber, builder.AsSpan());
 			}
@@ -194,13 +199,13 @@ public static class FlexVerComparer
 		return CreateComponent(lastWasNumber, builder.AsSpan());
 	}
 
-	private static VersionComponent CreateComponent(bool number, ReadOnlySpan<ushort> s)
+	private static VersionComponent CreateComponent(bool number, ReadOnlySpan<Rune> s)
 	{
 		if (number) {
 			return new VersionComponent(s, VersionComponentType.Numeric);
 		}
 
-		if (s.Length > 1 && s[0] == PreReleaseStartCh) {
+		if (s.Length > 1 && s[0] == PreReleaseStartCp) {
 			return new VersionComponent(s, VersionComponentType.SemVerPrerelease);
 		}
 

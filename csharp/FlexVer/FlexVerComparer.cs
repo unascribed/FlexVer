@@ -185,7 +185,7 @@ public static class FlexVerComparer
 				break;
 			}
 
-			bool isNumber = Rune.IsDigit(cp);
+			bool isNumber = cp.IsAscii && Rune.IsDigit(cp);
 			if (// Ending a Number component
 				isNumber != lastWasNumber
 				// Starting a new PreRelease component

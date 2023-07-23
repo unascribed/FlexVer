@@ -7,6 +7,7 @@
  * See <http://creativecommons.org/publicdomain/zero/1.0/>
  */
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -160,7 +161,7 @@ public static class FlexVerComparer
 	}
 
 	internal static VersionComponent GetNextVersionComponent(
-		string str,
+		ReadOnlySpan<char> str,
 		ref int i,
 		ref bool hitAppendix,
 		Span<Rune> writableComponentCodepoints)
@@ -174,12 +175,8 @@ public static class FlexVerComparer
 		ValueListBuilder<Rune> builder = new ValueListBuilder<Rune>(writableComponentCodepoints);
 
 		while (i < str.Length) {
-			if (char.IsHighSurrogate(str[i])) i++;
-			if (!Rune.TryGetRuneAt(str, i, out Rune cp)) {
-				throw new FormatException("Failed to parse version to Unicode code points") {
-					Data = { ["Value"] = str, ["Index"] = i }
-				};
-			}
+			Rune.DecodeFromUtf16(str[i..], out Rune cp, out int charsConsumed);
+
 			if (cp == AppendixStartCp) {
 				hitAppendix = true;
 				break;
@@ -194,7 +191,7 @@ public static class FlexVerComparer
 				return CreateComponent(lastWasNumber, builder.AsSpan());
 			}
 			builder.Append(cp);
-			i++;
+			i += charsConsumed;
 		}
 		return CreateComponent(lastWasNumber, builder.AsSpan());
 	}

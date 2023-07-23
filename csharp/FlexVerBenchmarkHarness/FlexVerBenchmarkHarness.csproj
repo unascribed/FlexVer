@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\FlexVer\FlexVer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\test\*.*">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

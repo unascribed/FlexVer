@@ -1,11 +1,23 @@
+# python: 3.11
+import typing
 import unittest
 import flexver
 
-opTable = { '>': -1, '=': 0, '<': 1 }
 
-
-class MyTestCase( unittest.TestCase ):
+class FlexVerTestCase(unittest.TestCase):
 	...
+
+
+def createTest( index: int, line: str ) -> typing.Callable[[unittest.TestCase], None]:
+	match line.split( ' ' ):
+		case [ first, '>', second ]:
+			return lambda self: self.assertGreater( flexver.compare( first, second ), 0, f'In comparison `{line}`' )
+		case [ first, '=', second ]:
+			return lambda self: self.assertEqual( flexver.compare( first, second ), 0, f'In comparison `{line}`' )
+		case [ first, '<', second ]:
+			return lambda self: self.assertLess( flexver.compare( first, second ), 0, f'In comparison `{line}`' )
+		case [ _, op, _ ]:
+			raise RuntimeError( f'Unrecognized comparison type `{op}` at line {index}' )
 
 
 def loadTests( path: str ):
@@ -13,18 +25,14 @@ def loadTests( path: str ):
 		for index, line in enumerate( file ):  # type: int, str
 			if (pound := line.find('#')) != -1:
 				line = line[: pound ]
-			if not line or line == '\n' or line[0] == '#':
-				continue
 
 			if line.endswith( '\n' ):
 				line = line[: -1]
 
-			parts = line.split(' ')
+			if not line or line[0] == '#':
+				continue
 
-			def test( self ) -> None:
-				self.assertEqual(opTable[parts[1]], flexver.FlexVerComparator.compare(parts[0], parts[2]), line)
-
-			setattr( MyTestCase, f'test_{index}', test )
+			setattr( FlexVerTestCase, f'test_{index}', createTest( index, line ) )
 
 
 loadTests( '../test/test_vectors.txt' )

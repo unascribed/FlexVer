@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: pip install poetry # setup
     - uses: actions/setup-python@v4
       with:
         python-version: ^3.8
         cache: poetry
-    - run: pip install poetry # setup
     - run: poetry build -n    # build
     - run: cd python && poetry run python -m unittest # test

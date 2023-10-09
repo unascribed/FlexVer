@@ -12,9 +12,9 @@ import functools
 import typing
 import dataclasses
 
-__author__ = "ENDERZOMBI102 <enderzombi102.end@gmail.com>"
-__license__ = "CC0-1.0"
-__version__ = "1.1.1"
+__author__ = 'ENDERZOMBI102 <enderzombi102.end@gmail.com>'
+__license__ = 'CC0-1.0'
+__version__ = '1.1.1'
 __all__ = [ 'FlexVer', 'compare' ]
 
 
@@ -45,7 +45,7 @@ class FlexVer:
 		:returns: `0`:code: if the two are equal, a negative number if `self < other`:code:, or a positive number if `self > other`:code:.
 		"""
 		for i in range( max( len( self._components ), len( other._components ) ) ):
-			c: int = _get( self._components, i ).compareTo( _get( other._components, i ) )
+			c: int = _get( self._components, i ).compare_to( _get( other._components, i ) )
 			if c != 0:
 				return c
 		return 0
@@ -74,7 +74,7 @@ def compare( a: str, b: str ) -> int:
 	ad: typing.List[ _VersionComponent] = _decompose(a)
 	bd: typing.List[ _VersionComponent] = _decompose(b)
 	for i in range( max( len( ad ), len( bd ) ) ):
-		c = _get( ad, i ).compareTo( _get( bd, i ) )
+		c = _get( ad, i ).compare_to( _get( bd, i ) )
 		if c != 0:
 			return c
 	return 0
@@ -84,7 +84,7 @@ def compare( a: str, b: str ) -> int:
 class _VersionComponent:
 	_component: typing.Final[ str ] = ''
 
-	def compareTo( self, that: '_VersionComponent' ) -> int:
+	def compare_to( self, that: '_VersionComponent' ) -> int:
 		if that == _null:
 			return 1
 
@@ -107,8 +107,8 @@ class _VersionComponent:
 
 
 class _NullVersionComponent(_VersionComponent):
-	def compareTo( self, other: _VersionComponent ) -> int:
-		return 0 if other is _null else -other.compareTo( self )
+	def compare_to( self, other: _VersionComponent ) -> int:
+		return 0 if other is _null else -other.compare_to( self )
 
 	def __str__( self ) -> str:
 		return '/'
@@ -121,17 +121,17 @@ _null: typing.Final[ _VersionComponent] = _NullVersionComponent()
 
 
 class _SemVerPrereleaseVersionComponent(_VersionComponent):
-	def compareTo( self, that: _VersionComponent ) -> int:
+	def compare_to( self, that: _VersionComponent ) -> int:
 		if that == _null:
 			return -1  # opposite order
-		return super().compareTo( that )
+		return super().compare_to( that )
 
 	def __repr__( self ) -> str:
 		return f'p{self._component}'
 
 
 class _NumericVersionComponent(_VersionComponent):
-	def compareTo( self, that: _VersionComponent ) -> int:
+	def compare_to( self, that: _VersionComponent ) -> int:
 		if that == _null:
 			return 1
 
@@ -149,7 +149,7 @@ class _NumericVersionComponent(_VersionComponent):
 					return ord( ad ) - ord( bd )
 			return 0
 
-		return super().compareTo( that )
+		return super().compare_to( that )
 
 	def __repr__( self ) -> str:
 		return f'n{self._component}'
@@ -172,7 +172,7 @@ def _decompose( string: str ) -> typing.List[_VersionComponent]:
 
 	lastWasNumber: bool = 48 <= ord( string[0] ) <= 57
 	accum: typing.List[ str ] = [ ]
-	out: typing.List[ _VersionComponent] = [ ]
+	out: typing.List[ _VersionComponent ] = [ ]
 	for cp in string:
 		if cp == '+':
 			break  # remove appendices
@@ -187,7 +187,7 @@ def _decompose( string: str ) -> typing.List[_VersionComponent]:
 	return out
 
 
-def _get(li: typing.List[ _VersionComponent], i: int) -> _VersionComponent:
+def _get( li: typing.List[ _VersionComponent], i: int ) -> _VersionComponent:
 	"""
 	When comparing two versions, an additional "null" component is introduced if the versions are of differing length.
 	The shorter version is padded with nulls at the end, until it matches the length of the longer version.

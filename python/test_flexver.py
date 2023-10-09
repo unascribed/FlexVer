@@ -26,8 +26,7 @@ def loadTests( path: str ):
 			if (pound := line.find('#')) != -1:
 				line = line[: pound ]
 
-			if line.endswith( '\n' ):
-				line = line[: -1]
+			line = line.rstrip( '\n' )
 
 			if not line or line[0] == '#':
 				continue

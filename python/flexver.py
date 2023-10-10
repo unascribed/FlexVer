@@ -71,8 +71,8 @@ def compare( a: str, b: str ) -> int:
 	:param b: The second version string.
 	:returns: `0`:code: if the two versions are equal, a negative number if `a < b`:code:, or a positive number if `a > b`:code:.
 	"""
-	ad: typing.List[ _VersionComponent] = _decompose(a)
-	bd: typing.List[ _VersionComponent] = _decompose(b)
+	ad: typing.List[ _VersionComponent ] = _decompose(a)
+	bd: typing.List[ _VersionComponent ] = _decompose(b)
 	for i in range( max( len( ad ), len( bd ) ) ):
 		c = _get( ad, i ).compare_to( _get( bd, i ) )
 		if c != 0:
@@ -117,7 +117,7 @@ class _NullVersionComponent(_VersionComponent):
 		return '/'
 
 
-_null: typing.Final[ _VersionComponent] = _NullVersionComponent()
+_null: typing.Final[ _VersionComponent ] = _NullVersionComponent()
 
 
 class _SemVerPrereleaseVersionComponent(_VersionComponent):
@@ -187,7 +187,7 @@ def _decompose( string: str ) -> typing.List[_VersionComponent]:
 	return out
 
 
-def _get( li: typing.List[ _VersionComponent], i: int ) -> _VersionComponent:
+def _get( li: typing.List[ _VersionComponent ], i: int ) -> _VersionComponent:
 	"""
 	When comparing two versions, an additional "null" component is introduced if the versions are of differing length.
 	The shorter version is padded with nulls at the end, until it matches the length of the longer version.

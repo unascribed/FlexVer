@@ -1,0 +1,22 @@
+[tool.poetry]
+    name = "flexver"
+    version = "1.1.1"
+    description = "FlexVer is a SemVer-compatible intuitive comparator for free-form versioning strings as seen in the wild."
+    authors = ["ENDERZOMBI102 <enderzombi102.end@gmail.com>"]
+    license = "CC0-1.0"
+    readme = "README.md"
+    repository = "https://github.com/unascribed/FlexVer"
+    classifiers = [
+        "Topic :: Software Development :: Libraries :: Python Modules"
+    ]
+    packages = [
+        { include = "flexver.py", from = "python" }
+    ]
+
+[tool.poetry.dependencies]
+    python = "^3.8"
+
+
+[build-system]
+    requires = ["poetry-core"]
+    build-backend = "poetry.core.masonry.api"

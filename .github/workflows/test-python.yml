@@ -1,0 +1,26 @@
+name: Python
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 'python/**'
+    - 'test/**'
+  pull_request:
+    paths:
+    - 'python/**'
+    - 'test/**'
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install poetry # setup
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ^3.8
+        cache: poetry
+    - run: poetry build -n    # build
+    - run: cd python && poetry run python -m unittest # test

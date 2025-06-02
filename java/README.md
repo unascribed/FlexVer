@@ -5,20 +5,19 @@ The original Java implementation of FlexVer, initially written for Quilt Loader.
 ## Getting it
 
 You can either copy [FlexVerComparator.java](src/main/java/com/unascribed/flexver/FlexVerComparator.java)
-wholesale into your project, or retrieve it from the Sleeping Town Maven, like so in Gradle:
+wholesale into your project, or retrieve it from Maven Central, like so in Gradle:
 
 ```gradle
 repositories {
-	maven {
-		url 'https://repo.sleeping.town'
-		content.includeGroup 'com.unascribed'
-	}
+	mavenCentral()
 }
 
 dependencies {
-	implementation 'com.unascribed:flexver-java:1.0.2'
+	implementation 'com.unascribed:flexver-java:1.1.1'
 }
 ```
+
+(Releases are also published to the Sleeping Town Maven at repo.sleeping.town)
 
 ## Usage
 

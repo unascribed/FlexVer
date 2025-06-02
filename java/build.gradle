@@ -1,6 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
+	id 'signing'
 }
 
 sourceCompatibility = targetCompatibility = 8
@@ -13,28 +14,38 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
 }
 
 compileJava {
 	options.release = 8
 }
 
+java {
+	withSourcesJar()
+	withJavadocJar()
+}
+
 publishing {
 	repositories {
-		if (project.hasProperty("publish-username")) {
+		if (project.hasProperty("SleepingTownUsername")) {
 			maven {
+				name 'SleepingTown'
 				url "https://repo-api.sleeping.town/"
-				credentials {
-					username project.hasProperty("publish-username") ? project.getProperty("publish-username") : null
-					password project.hasProperty("publish-password") ? project.getProperty("publish-password") : null
-				}
+				credentials(PasswordCredentials)
+			}
+		}
+		if (project.hasProperty("CentralUsername")) {
+			maven {
+				name 'Central'
+				url "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
+				credentials(PasswordCredentials)
 			}
 		}
 		maven {
@@ -47,6 +58,37 @@ publishing {
 			artifactId = 'flexver-java'
 			version = project.version
 			from components.java
+			
+			pom {
+				// Central requires ALL of this legacy fluff that nobody uses
+				name = 'FlexVer'
+				description = 'A Java implementation of the FlexVer version comparison standard'
+				url = 'https://github.com/unascribed/FlexVer'
+				licenses {
+					license {
+						name = 'Creative Commons Zero v1.0 Universal'
+						url = 'https://creativecommons.org/publicdomain/zero/1.0/legalcode'
+					}
+				}
+				developers {
+					developer {
+						id = 'unascribed'
+						name = 'Una Kearney'
+						email = 'me@unascribed.com'
+					}
+				}
+				scm {
+					connection = 'scm:git:https://github.com/unascribed/FlexVer.git'
+					developerConnection = 'scm:git:ssh://github.com/unascribed/FlexVer.git'
+					url = 'https://github.com/unascribed/FlexVer'
+				}
+			}
 		}
 	}
+}
+
+
+signing {
+	useGpgCmd()
+	sign publishing.publications.maven
 }
